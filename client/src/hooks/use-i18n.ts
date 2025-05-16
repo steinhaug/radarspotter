@@ -30,16 +30,20 @@ export function useMapboxKey() {
 
   useEffect(() => {
     // Fetch the Mapbox API key from server
-    fetch('/api/mapbox-key')
-      .then(res => res.json())
-      .then(data => {
+    const fetchKey = async () => {
+      try {
+        const response = await fetch('/api/mapbox-key');
+        const data = await response.json();
         if (data.key) {
+          console.log("Mapbox key received successfully");
           setKey(data.key);
         }
-      })
-      .catch(err => {
+      } catch (err) {
         console.error('Failed to fetch Mapbox API key:', err);
-      });
+      }
+    };
+    
+    fetchKey();
   }, []);
 
   return key;
