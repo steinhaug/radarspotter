@@ -29,6 +29,42 @@ export class MemStorage implements IStorage {
     this.radarReports = new Map();
     this.currentUserId = 1;
     this.currentReportId = 1;
+    
+    // Add a default user for development
+    const defaultUser: User = {
+      id: this.currentUserId,
+      username: 'demo',
+      password: 'password',
+      language: 'en',
+      trialStartDate: new Date(),
+      subscribed: false
+    };
+    this.users.set(defaultUser.id, defaultUser);
+    
+    // Add some sample radar reports
+    const now = new Date();
+    const report1: RadarReport = {
+      id: this.currentReportId++,
+      userId: defaultUser.id,
+      latitude: 58.1293246,
+      longitude: 7.9831073,
+      location: null,
+      reportedAt: new Date(now.getTime() - 15 * 60 * 1000), // 15 minutes ago
+      active: true
+    };
+    
+    const report2: RadarReport = {
+      id: this.currentReportId++,
+      userId: defaultUser.id,
+      latitude: 58.1446354,
+      longitude: 7.9957421,
+      location: null,
+      reportedAt: new Date(now.getTime() - 30 * 60 * 1000), // 30 minutes ago
+      active: true
+    };
+    
+    this.radarReports.set(report1.id, report1);
+    this.radarReports.set(report2.id, report2);
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -47,6 +83,7 @@ export class MemStorage implements IStorage {
     const user: User = { 
       ...insertUser, 
       id,
+      language: insertUser.language || 'en',
       trialStartDate: now,
       subscribed: false,
     };
@@ -61,19 +98,21 @@ export class MemStorage implements IStorage {
     const newReport: RadarReport = {
       ...insertReport,
       id,
+      userId: insertReport.userId || null,
+      location: insertReport.location || null,
       reportedAt: now,
       active: true,
     };
     
     this.radarReports.set(id, newReport);
     
-    // Automatically expire reports after 3 hours
+    // Automatically expire reports after 3 hours (instead of 30 minutes)
     setTimeout(() => {
       const report = this.radarReports.get(id);
       if (report) {
         this.radarReports.set(id, { ...report, active: false });
       }
-    }, 3 * 60 * 60 * 1000);
+    }, 3 * 60 * 60 * 1000); // 3 hours in milliseconds
     
     return newReport;
   }

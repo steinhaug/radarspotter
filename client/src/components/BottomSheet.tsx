@@ -75,7 +75,7 @@ export default function BottomSheet() {
     if (reportsLoaded && position && firstLoad.current) {
       firstLoad.current = false;
       
-      // Check if there are any reports within 20km
+      // Check if there are any reports within 40km
       if (nearbyReports.length > 0) {
         // Automatically open the bottom sheet
         setIsOpen(true);

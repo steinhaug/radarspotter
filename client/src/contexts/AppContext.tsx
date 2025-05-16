@@ -16,27 +16,21 @@ interface AppContextProps {
 const AppContext = createContext<AppContextProps | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<string>(getDefaultLanguage());
+  const [language, setLanguage] = useState<string>('en');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
 
-  // Initialize language detection and storage
+  // Initialize language detection
   useEffect(() => {
+    // Use browser language detection
     try {
-      // Check if language is stored in local storage
-      const storedLang = localStorage.getItem('preferredLanguage');
-      if (storedLang && (storedLang === 'en' || storedLang === 'no')) {
-        setLanguage(storedLang);
-      } else {
-        // Use browser language as fallback
-        const detectedLang = getDefaultLanguage();
-        setLanguage(detectedLang);
-        localStorage.setItem('preferredLanguage', detectedLang);
+      const browserLang = navigator.language.slice(0, 2).toLowerCase();
+      if (browserLang === 'no' || browserLang === 'nb' || browserLang === 'nn') {
+        setLanguage('no');
       }
-    } catch (error) {
-      // Fallback to default language if localStorage is not available
-      console.error("Error accessing localStorage:", error);
-      setLanguage('en');
+    } catch (e) {
+      // Fallback to English
+      console.error("Error detecting browser language:", e);
     }
   }, []);
   
@@ -53,11 +47,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const toggleLanguage = () => {
     const newLang = language === 'en' ? 'no' : 'en';
     setLanguage(newLang);
-    try {
-      localStorage.setItem('preferredLanguage', newLang);
-    } catch (error) {
-      console.error("Error saving language preference:", error);
-    }
   };
 
   const toggleSettings = () => {
