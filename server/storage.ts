@@ -58,7 +58,51 @@ export class MemStorage implements IStorage {
     const id = this.currentReportId++;
     const now = new Date();
     
-    // Check for nearby reports within 300 meters and within the last 60 minutes
+    // Find very close reports (within 50 meters) - these are likely the same radar control
+    const veryCloseReports = Array.from(this.radarReports.values()).filter(report => {
+      // Only consider active reports
+      if (!report.active) return false;
+      
+      // Check if within 3 hours (to maintain consistency with cleanup time)
+      const reportTime = new Date(report.reportedAt).getTime();
+      const timeDiff = now.getTime() - reportTime;
+      const isWithinTimeWindow = timeDiff <= 3 * 60 * 60 * 1000; // 3 hours
+      
+      if (!isWithinTimeWindow) return false;
+      
+      // Check if very close (within 50 meters) - same exact control
+      const distance = this.calculateDistance(
+        insertReport.latitude, 
+        insertReport.longitude, 
+        report.latitude, 
+        report.longitude
+      );
+      
+      return distance <= 0.05; // 50 meters (in km)
+    });
+    
+    // If we found very close reports, we'll update the most recent one
+    // and NOT create a new report
+    if (veryCloseReports.length > 0) {
+      // Sort by most recent first
+      veryCloseReports.sort((a, b) => {
+        return new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime();
+      });
+      
+      const mostRecent = veryCloseReports[0];
+      const updatedReport = {
+        ...mostRecent,
+        reportedAt: now, // Update timestamp to now
+        verifiedCount: mostRecent.verifiedCount + 1,
+        verified: true, // Mark as verified since it's been reported multiple times
+      };
+      
+      this.radarReports.set(mostRecent.id, updatedReport);
+      return updatedReport;
+    }
+    
+    // If we didn't find very close reports, we'll proceed with checking nearby reports
+    // for verification purposes (within 300 meters)
     const nearbyReports = Array.from(this.radarReports.values()).filter(report => {
       // Only consider active reports
       if (!report.active) return false;
@@ -78,27 +122,10 @@ export class MemStorage implements IStorage {
         report.longitude
       );
       
-      return distance <= 0.3; // 300 meters (in km)
+      return distance <= 0.3 && distance > 0.05; // Between 50-300 meters (in km)
     });
     
-    // Sort nearby reports by distance
-    nearbyReports.sort((a, b) => {
-      const distanceA = this.calculateDistance(
-        insertReport.latitude, 
-        insertReport.longitude, 
-        a.latitude, 
-        a.longitude
-      );
-      const distanceB = this.calculateDistance(
-        insertReport.latitude, 
-        insertReport.longitude, 
-        b.latitude, 
-        b.longitude
-      );
-      return distanceA - distanceB;
-    });
-    
-    // Create the new report first
+    // Create the new report
     let verifiedCount = 1;
     let isVerified = false;
     
@@ -106,16 +133,11 @@ export class MemStorage implements IStorage {
       // Found nearby reports, so this will be verified
       isVerified = true;
       
-      // Get the closest report
-      const closestReport = nearbyReports[0];
-      verifiedCount = closestReport.verifiedCount + 1;
-      
-      // Update ALL nearby reports to be verified and increment their count
+      // Update ALL nearby reports to be verified
       nearbyReports.forEach(report => {
         this.radarReports.set(report.id, {
           ...report,
-          verified: true,
-          verifiedCount
+          verified: true
         });
       });
     }
