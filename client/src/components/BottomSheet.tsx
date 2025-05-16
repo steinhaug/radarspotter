@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from '@/hooks/use-i18n';
 import { useQuery } from '@tanstack/react-query';
 import { RadarReport } from '@shared/schema';
@@ -29,9 +29,6 @@ export default function BottomSheet() {
   const handleRef = useRef<HTMLDivElement>(null);
   const { position } = useGeolocation();
   const { daysLeft } = useTrial();
-  
-  // Flag to track if this is the first time reports have been fetched
-  const firstLoad = useRef(true);
 
   // Drag state
   const dragStartY = useRef(0);
@@ -39,75 +36,10 @@ export default function BottomSheet() {
   const isDragging = useRef(false);
 
   // Query for radar reports
-  const { data: radarReports, isSuccess: reportsLoaded } = useQuery<RadarReport[]>({
+  const { data: radarReports } = useQuery<RadarReport[]>({
     queryKey: ['/api/radar-reports'],
   });
 
-  // Process reports - sort by distance and filter nearby ones
-  const { sortedReports, nearbyReports } = useMemo(() => {
-    if (!radarReports || !position) {
-      return { sortedReports: [], nearbyReports: [] };
-    }
-    
-    const sorted = [...radarReports].sort((a, b) => {
-      const { latitude, longitude } = position.coords;
-      const distA = getDistanceFromLatLonInKm(latitude, longitude, a.latitude, a.longitude);
-      const distB = getDistanceFromLatLonInKm(latitude, longitude, b.latitude, b.longitude);
-      return distA - distB;
-    });
-    
-    const nearby = sorted.filter(report => {
-      const { latitude, longitude } = position.coords;
-      const distance = getDistanceFromLatLonInKm(
-        latitude, 
-        longitude, 
-        report.latitude, 
-        report.longitude
-      );
-      return distance <= 40; // 40km radius
-    });
-    
-    return { sortedReports: sorted, nearbyReports: nearby };
-  }, [radarReports, position]);
-  
-  // Auto-open bottom sheet if there are nearby radar reports
-  useEffect(() => {
-    if (reportsLoaded && position && firstLoad.current) {
-      firstLoad.current = false;
-      
-      // Check if there are any reports within 40km
-      if (nearbyReports.length > 0) {
-        // Automatically open the bottom sheet
-        setIsOpen(true);
-      }
-    }
-  }, [reportsLoaded, position, nearbyReports]);
-  
-  // Format timestamp to "X min ago"
-  const getTimeAgo = (timestamp: Date) => {
-    const minutes = Math.round((new Date().getTime() - new Date(timestamp).getTime()) / 60000);
-    return `${minutes} ${t('minutes')} ${t('ago')}`;
-  };
-
-  // Calculate distance
-  const getDistance = (lat: number, lng: number) => {
-    if (!position) return '';
-    
-    const distance = getDistanceFromLatLonInKm(
-      position.coords.latitude,
-      position.coords.longitude,
-      lat,
-      lng
-    );
-    
-    return `${distance.toFixed(1)} ${t('kmAway')}`;
-  };
-
-  // Toggle the bottom sheet
-  const toggleSheet = () => {
-    setIsOpen(!isOpen);
-  };
-  
   // Set up event listeners for dragging
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
@@ -179,6 +111,43 @@ export default function BottomSheet() {
     };
   }, [isOpen]);
 
+  const toggleSheet = () => {
+    setIsOpen(!isOpen);
+  };
+
+  // Sort reports by distance if position is available
+  const sortedReports = radarReports
+    ? [...radarReports].sort((a, b) => {
+        if (!position) return 0;
+        
+        const { latitude, longitude } = position.coords;
+        const distA = getDistanceFromLatLonInKm(latitude, longitude, a.latitude, a.longitude);
+        const distB = getDistanceFromLatLonInKm(latitude, longitude, b.latitude, b.longitude);
+        
+        return distA - distB;
+      })
+    : [];
+
+  // Format timestamp to "X min ago"
+  const getTimeAgo = (timestamp: Date) => {
+    const minutes = Math.round((new Date().getTime() - new Date(timestamp).getTime()) / 60000);
+    return `${minutes} ${t('minutes')} ${t('ago')}`;
+  };
+
+  // Calculate distance
+  const getDistance = (lat: number, lng: number) => {
+    if (!position) return '';
+    
+    const distance = getDistanceFromLatLonInKm(
+      position.coords.latitude,
+      position.coords.longitude,
+      lat,
+      lng
+    );
+    
+    return `${distance.toFixed(1)} ${t('kmAway')}`;
+  };
+
   return (
     <div 
       ref={sheetRef}
@@ -204,23 +173,19 @@ export default function BottomSheet() {
         <div className="mt-4 space-y-3 max-h-[30vh] overflow-y-auto">
           {sortedReports.length > 0 ? (
             sortedReports.map((report) => (
-              <div key={report.id} className="p-3 bg-light rounded-lg flex items-center space-x-3 hover:bg-light hover:shadow-md transition-all">
-                <div className="w-10 h-10 bg-primary bg-opacity-10 rounded-full flex items-center justify-center relative">
+              <div key={report.id} className="p-3 bg-light rounded-lg flex items-center space-x-3">
+                <div className="w-10 h-10 bg-primary bg-opacity-10 rounded-full flex items-center justify-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-secondary rounded-full border-2 border-white"></span>
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-medium">{report.location || `Radar Control`}</h3>
-                  <div className="flex justify-between">
-                    <p className="text-sm text-gray-500">
-                      {getTimeAgo(report.reportedAt)} • {getDistance(report.latitude, report.longitude)}
-                    </p>
-                    <p className="text-xs text-secondary font-medium">Active</p>
-                  </div>
+                  <h3 className="font-medium">{report.location || `${report.latitude.toFixed(4)}, ${report.longitude.toFixed(4)}`}</h3>
+                  <p className="text-sm text-gray-500">
+                    {getTimeAgo(report.reportedAt)} • {getDistance(report.latitude, report.longitude)}
+                  </p>
                 </div>
-                <button className="text-secondary p-1 hover:bg-secondary hover:bg-opacity-10 rounded-full" aria-label="Navigate">
+                <button className="text-secondary">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>

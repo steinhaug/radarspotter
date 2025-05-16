@@ -16,24 +16,10 @@ interface AppContextProps {
 const AppContext = createContext<AppContextProps | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<string>('en');
+  const [language, setLanguage] = useState<string>(getDefaultLanguage());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
 
-  // Initialize language detection
-  useEffect(() => {
-    // Use browser language detection
-    try {
-      const browserLang = navigator.language.slice(0, 2).toLowerCase();
-      if (browserLang === 'no' || browserLang === 'nb' || browserLang === 'nn') {
-        setLanguage('no');
-      }
-    } catch (e) {
-      // Fallback to English
-      console.error("Error detecting browser language:", e);
-    }
-  }, []);
-  
   // Initialize Mapbox when the component mounts
   useEffect(() => {
     // Get the Mapbox API key from environment variables
@@ -45,8 +31,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const toggleLanguage = () => {
-    const newLang = language === 'en' ? 'no' : 'en';
-    setLanguage(newLang);
+    setLanguage(language === 'en' ? 'no' : 'en');
   };
 
   const toggleSettings = () => {

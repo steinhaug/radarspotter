@@ -65,19 +65,13 @@ export default function ReportButton() {
         className={`bg-primary text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center ${!isReporting && 'radar-pulse'} transition-all`}
         onClick={handleReportRadar}
         disabled={isReporting || !position}
-        aria-label="Report radar"
       >
         {isReporting ? (
           <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
         ) : (
-          <div className="relative">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            <span className="absolute -top-2 -right-2 text-xs bg-secondary text-white px-1 rounded-full">
-              !
-            </span>
-          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
         )}
       </button>
     </div>

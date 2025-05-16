@@ -23,87 +23,12 @@ export class MemStorage implements IStorage {
   private currentUserId: number;
   private currentReportId: number;
   private readonly TRIAL_DURATION_DAYS = 30;
-  private readonly RADAR_REPORT_EXPIRATION_HOURS = 3; // 3 hours expiration time
 
   constructor() {
     this.users = new Map();
     this.radarReports = new Map();
     this.currentUserId = 1;
     this.currentReportId = 1;
-    
-    // Add a default user for development
-    const defaultUser: User = {
-      id: this.currentUserId,
-      username: 'demo',
-      password: 'password',
-      language: 'en',
-      trialStartDate: new Date(),
-      subscribed: false
-    };
-    this.users.set(defaultUser.id, defaultUser);
-    
-    // Add some sample radar reports
-    const now = new Date();
-    const report1: RadarReport = {
-      id: this.currentReportId++,
-      userId: defaultUser.id,
-      latitude: 58.1293246,
-      longitude: 7.9831073,
-      location: null,
-      reportedAt: new Date(now.getTime() - 15 * 60 * 1000), // 15 minutes ago
-      active: true
-    };
-    
-    const report2: RadarReport = {
-      id: this.currentReportId++,
-      userId: defaultUser.id,
-      latitude: 58.1446354,
-      longitude: 7.9957421,
-      location: null,
-      reportedAt: new Date(now.getTime() - 30 * 60 * 1000), // 30 minutes ago
-      active: true
-    };
-    
-    // Adding a third report for testing
-    const report3: RadarReport = {
-      id: this.currentReportId++,
-      userId: defaultUser.id,
-      latitude: 58.1625123,
-      longitude: 8.0123456,
-      location: null,
-      reportedAt: new Date(now.getTime() - 45 * 60 * 1000), // 45 minutes ago
-      active: true
-    };
-    
-    this.radarReports.set(report1.id, report1);
-    this.radarReports.set(report2.id, report2);
-    this.radarReports.set(report3.id, report3);
-    
-    // Set up expiration timers for all initial reports
-    this.setupExpirationTimer(report1.id);
-    this.setupExpirationTimer(report2.id);
-    this.setupExpirationTimer(report3.id);
-  }
-
-  // Helper to set up expiration timers for reports
-  private setupExpirationTimer(reportId: number): void {
-    const report = this.radarReports.get(reportId);
-    if (!report) return;
-    
-    const now = new Date();
-    const reportTime = new Date(report.reportedAt).getTime();
-    const elapsedMs = now.getTime() - reportTime;
-    const totalExpirationMs = this.RADAR_REPORT_EXPIRATION_HOURS * 60 * 60 * 1000;
-    const remainingMs = Math.max(0, totalExpirationMs - elapsedMs);
-    
-    // Schedule expiration
-    setTimeout(() => {
-      const currentReport = this.radarReports.get(reportId);
-      if (currentReport) {
-        this.radarReports.set(reportId, { ...currentReport, active: false });
-        console.log(`Report ${reportId} expired after ${this.RADAR_REPORT_EXPIRATION_HOURS} hours`);
-      }
-    }, remainingMs);
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -122,7 +47,6 @@ export class MemStorage implements IStorage {
     const user: User = { 
       ...insertUser, 
       id,
-      language: insertUser.language || 'en',
       trialStartDate: now,
       subscribed: false,
     };
@@ -137,22 +61,19 @@ export class MemStorage implements IStorage {
     const newReport: RadarReport = {
       ...insertReport,
       id,
-      userId: insertReport.userId || null,
-      location: insertReport.location || null,
       reportedAt: now,
       active: true,
     };
     
     this.radarReports.set(id, newReport);
     
-    // Set expiration timer for the new report
+    // Automatically expire reports after 30 minutes
     setTimeout(() => {
       const report = this.radarReports.get(id);
       if (report) {
         this.radarReports.set(id, { ...report, active: false });
-        console.log(`Report ${id} expired after ${this.RADAR_REPORT_EXPIRATION_HOURS} hours`);
       }
-    }, this.RADAR_REPORT_EXPIRATION_HOURS * 60 * 60 * 1000); // 3 hours in milliseconds
+    }, 30 * 60 * 1000);
     
     return newReport;
   }
