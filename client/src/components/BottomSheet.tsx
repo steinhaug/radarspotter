@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { useTranslation } from '@/hooks/use-i18n';
 import { useQuery } from '@tanstack/react-query';
 import { RadarReport } from '@shared/schema';
@@ -43,7 +43,70 @@ export default function BottomSheet() {
     queryKey: ['/api/radar-reports'],
   });
 
-  // The auto-open effect moved after nearbyReports is defined
+  // Process reports - sort by distance and filter nearby ones
+  const { sortedReports, nearbyReports } = useMemo(() => {
+    if (!radarReports || !position) {
+      return { sortedReports: [], nearbyReports: [] };
+    }
+    
+    const sorted = [...radarReports].sort((a, b) => {
+      const { latitude, longitude } = position.coords;
+      const distA = getDistanceFromLatLonInKm(latitude, longitude, a.latitude, a.longitude);
+      const distB = getDistanceFromLatLonInKm(latitude, longitude, b.latitude, b.longitude);
+      return distA - distB;
+    });
+    
+    const nearby = sorted.filter(report => {
+      const { latitude, longitude } = position.coords;
+      const distance = getDistanceFromLatLonInKm(
+        latitude, 
+        longitude, 
+        report.latitude, 
+        report.longitude
+      );
+      return distance <= 20; // 20km radius
+    });
+    
+    return { sortedReports: sorted, nearbyReports: nearby };
+  }, [radarReports, position]);
+  
+  // Auto-open bottom sheet if there are nearby radar reports
+  useEffect(() => {
+    if (reportsLoaded && position && firstLoad.current) {
+      firstLoad.current = false;
+      
+      // Check if there are any reports within 20km
+      if (nearbyReports.length > 0) {
+        // Automatically open the bottom sheet
+        setIsOpen(true);
+      }
+    }
+  }, [reportsLoaded, position, nearbyReports]);
+  
+  // Format timestamp to "X min ago"
+  const getTimeAgo = (timestamp: Date) => {
+    const minutes = Math.round((new Date().getTime() - new Date(timestamp).getTime()) / 60000);
+    return `${minutes} ${t('minutes')} ${t('ago')}`;
+  };
+
+  // Calculate distance
+  const getDistance = (lat: number, lng: number) => {
+    if (!position) return '';
+    
+    const distance = getDistanceFromLatLonInKm(
+      position.coords.latitude,
+      position.coords.longitude,
+      lat,
+      lng
+    );
+    
+    return `${distance.toFixed(1)} ${t('kmAway')}`;
+  };
+
+  // Toggle the bottom sheet
+  const toggleSheet = () => {
+    setIsOpen(!isOpen);
+  };
   
   // Set up event listeners for dragging
   useEffect(() => {
@@ -115,58 +178,6 @@ export default function BottomSheet() {
       document.removeEventListener('touchend', handleTouchEnd);
     };
   }, [isOpen]);
-
-  const toggleSheet = () => {
-    setIsOpen(!isOpen);
-  };
-
-  // Sort reports by distance if position is available
-  const sortedReports = radarReports
-    ? [...radarReports].sort((a, b) => {
-        if (!position) return 0;
-        
-        const { latitude, longitude } = position.coords;
-        const distA = getDistanceFromLatLonInKm(latitude, longitude, a.latitude, a.longitude);
-        const distB = getDistanceFromLatLonInKm(latitude, longitude, b.latitude, b.longitude);
-        
-        return distA - distB;
-      })
-    : [];
-    
-  // Get nearby reports (within 20km)
-  const nearbyReports = sortedReports.filter(report => {
-    if (!position) return false;
-    
-    const { latitude, longitude } = position.coords;
-    const distance = getDistanceFromLatLonInKm(
-      latitude, 
-      longitude, 
-      report.latitude, 
-      report.longitude
-    );
-    
-    return distance <= 20; // 20km radius
-  });
-
-  // Format timestamp to "X min ago"
-  const getTimeAgo = (timestamp: Date) => {
-    const minutes = Math.round((new Date().getTime() - new Date(timestamp).getTime()) / 60000);
-    return `${minutes} ${t('minutes')} ${t('ago')}`;
-  };
-
-  // Calculate distance
-  const getDistance = (lat: number, lng: number) => {
-    if (!position) return '';
-    
-    const distance = getDistanceFromLatLonInKm(
-      position.coords.latitude,
-      position.coords.longitude,
-      lat,
-      lng
-    );
-    
-    return `${distance.toFixed(1)} ${t('kmAway')}`;
-  };
 
   return (
     <div 
