@@ -67,13 +67,13 @@ export class MemStorage implements IStorage {
     
     this.radarReports.set(id, newReport);
     
-    // Automatically expire reports after 30 minutes
+    // Automatically expire reports after 3 hours
     setTimeout(() => {
       const report = this.radarReports.get(id);
       if (report) {
         this.radarReports.set(id, { ...report, active: false });
       }
-    }, 30 * 60 * 1000);
+    }, 3 * 60 * 60 * 1000);
     
     return newReport;
   }
