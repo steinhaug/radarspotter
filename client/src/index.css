@@ -88,19 +88,23 @@
 
 .radar-pulse {
   animation: pulse 2s infinite;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 @keyframes pulse {
   0% {
-    transform: scale(0.95);
+    transform: translate(-50%, -50%) scale(0.95);
     box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.7);
   }
   70% {
-    transform: scale(1);
+    transform: translate(-50%, -50%) scale(1.5);
     box-shadow: 0 0 0 15px rgba(255, 77, 77, 0);
   }
   100% {
-    transform: scale(0.95);
+    transform: translate(-50%, -50%) scale(0.95);
     box-shadow: 0 0 0 0 rgba(255, 77, 77, 0);
   }
 }

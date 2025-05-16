@@ -22,19 +22,29 @@ export default function RadarMarker({ report, map }: RadarMarkerProps) {
     // Different styling based on verification status
     if (report.verified) {
       // Verified report - red with solid appearance
-      el.className = 'w-6 h-6 bg-destructive rounded-full flex items-center justify-center pin-drop';
+      el.className = 'relative w-8 h-8 bg-red-500 rounded-full flex items-center justify-center pin-drop shadow-lg';
+      
+      // Create a solid border around the marker
+      const border = document.createElement('div');
+      border.className = 'absolute inset-0 rounded-full border-2 border-white';
+      el.appendChild(border);
       
       // Create the pulse animation element with stronger visibility
       const pulse = document.createElement('div');
-      pulse.className = 'w-8 h-8 bg-destructive rounded-full absolute opacity-40 radar-pulse';
+      pulse.className = 'w-12 h-12 bg-red-500 rounded-full opacity-40 radar-pulse';
       el.appendChild(pulse);
     } else {
       // Unverified report - gray with dashed border
-      el.className = 'w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center pin-drop border-2 border-dashed border-white';
+      el.className = 'relative w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center pin-drop';
+      
+      // Create a dashed border around the marker
+      const border = document.createElement('div');
+      border.className = 'absolute inset-0 rounded-full border-2 border-dashed border-white';
+      el.appendChild(border);
       
       // Create the pulse animation element with weaker visibility
       const pulse = document.createElement('div');
-      pulse.className = 'w-8 h-8 bg-gray-400 rounded-full absolute opacity-20 radar-pulse';
+      pulse.className = 'w-8 h-8 bg-gray-400 rounded-full opacity-20 radar-pulse';
       el.appendChild(pulse);
     }
     

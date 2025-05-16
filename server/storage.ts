@@ -59,7 +59,6 @@ export class MemStorage implements IStorage {
     const now = new Date();
     
     // Check for nearby reports within 300 meters and within the last 60 minutes
-    // to verify this report
     const nearbyReports = Array.from(this.radarReports.values()).filter(report => {
       // Only consider active reports
       if (!report.active) return false;
@@ -82,19 +81,46 @@ export class MemStorage implements IStorage {
       return distance <= 0.3; // 300 meters (in km)
     });
     
-    const isVerified = nearbyReports.length > 0;
-    const verifiedCount = isVerified ? nearbyReports[0].verifiedCount + 1 : 1;
+    // Sort nearby reports by distance
+    nearbyReports.sort((a, b) => {
+      const distanceA = this.calculateDistance(
+        insertReport.latitude, 
+        insertReport.longitude, 
+        a.latitude, 
+        a.longitude
+      );
+      const distanceB = this.calculateDistance(
+        insertReport.latitude, 
+        insertReport.longitude, 
+        b.latitude, 
+        b.longitude
+      );
+      return distanceA - distanceB;
+    });
     
-    // If we found a nearby report, we need to mark it as verified too
-    if (isVerified && nearbyReports.length > 0) {
-      const nearbyReport = nearbyReports[0];
-      this.radarReports.set(nearbyReport.id, {
-        ...nearbyReport,
-        verified: true,
-        verifiedCount
+    // Create the new report first
+    let verifiedCount = 1;
+    let isVerified = false;
+    
+    if (nearbyReports.length > 0) {
+      // Found nearby reports, so this will be verified
+      isVerified = true;
+      
+      // Get the closest report
+      const closestReport = nearbyReports[0];
+      verifiedCount = closestReport.verifiedCount + 1;
+      
+      // Update ALL nearby reports to be verified and increment their count
+      nearbyReports.forEach(report => {
+        this.radarReports.set(report.id, {
+          ...report,
+          verified: true,
+          verifiedCount
+        });
       });
     }
     
+    // Create the new report
     const newReport: RadarReport = {
       ...insertReport,
       id,
