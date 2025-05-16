@@ -173,19 +173,23 @@ export default function BottomSheet() {
         <div className="mt-4 space-y-3 max-h-[30vh] overflow-y-auto">
           {sortedReports.length > 0 ? (
             sortedReports.map((report) => (
-              <div key={report.id} className="p-3 bg-light rounded-lg flex items-center space-x-3">
-                <div className="w-10 h-10 bg-primary bg-opacity-10 rounded-full flex items-center justify-center">
+              <div key={report.id} className="p-3 bg-light rounded-lg flex items-center space-x-3 hover:bg-light hover:shadow-md transition-all">
+                <div className="w-10 h-10 bg-primary bg-opacity-10 rounded-full flex items-center justify-center relative">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-secondary rounded-full border-2 border-white"></span>
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-medium">{report.location || `${report.latitude.toFixed(4)}, ${report.longitude.toFixed(4)}`}</h3>
-                  <p className="text-sm text-gray-500">
-                    {getTimeAgo(report.reportedAt)} • {getDistance(report.latitude, report.longitude)}
-                  </p>
+                  <h3 className="font-medium">{report.location || `Radar Control`}</h3>
+                  <div className="flex justify-between">
+                    <p className="text-sm text-gray-500">
+                      {getTimeAgo(report.reportedAt)} • {getDistance(report.latitude, report.longitude)}
+                    </p>
+                    <p className="text-xs text-secondary font-medium">Active</p>
+                  </div>
                 </div>
-                <button className="text-secondary">
+                <button className="text-secondary p-1 hover:bg-secondary hover:bg-opacity-10 rounded-full" aria-label="Navigate">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
