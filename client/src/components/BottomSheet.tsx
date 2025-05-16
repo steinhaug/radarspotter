@@ -29,6 +29,9 @@ export default function BottomSheet() {
   const handleRef = useRef<HTMLDivElement>(null);
   const { position } = useGeolocation();
   const { daysLeft } = useTrial();
+  
+  // Flag to track if this is the first time reports have been fetched
+  const firstLoad = useRef(true);
 
   // Drag state
   const dragStartY = useRef(0);
@@ -36,10 +39,23 @@ export default function BottomSheet() {
   const isDragging = useRef(false);
 
   // Query for radar reports
-  const { data: radarReports } = useQuery<RadarReport[]>({
+  const { data: radarReports, isSuccess: reportsLoaded } = useQuery<RadarReport[]>({
     queryKey: ['/api/radar-reports'],
   });
 
+  // Auto-open bottom sheet if there are nearby radar reports
+  useEffect(() => {
+    if (reportsLoaded && position && firstLoad.current) {
+      firstLoad.current = false;
+      
+      // Check if there are any reports within 20km
+      if (nearbyReports.length > 0) {
+        // Automatically open the bottom sheet
+        setIsOpen(true);
+      }
+    }
+  }, [reportsLoaded, position, nearbyReports]);
+  
   // Set up event listeners for dragging
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
@@ -127,6 +143,21 @@ export default function BottomSheet() {
         return distA - distB;
       })
     : [];
+    
+  // Get nearby reports (within 20km)
+  const nearbyReports = sortedReports.filter(report => {
+    if (!position) return false;
+    
+    const { latitude, longitude } = position.coords;
+    const distance = getDistanceFromLatLonInKm(
+      latitude, 
+      longitude, 
+      report.latitude, 
+      report.longitude
+    );
+    
+    return distance <= 20; // 20km radius
+  });
 
   // Format timestamp to "X min ago"
   const getTimeAgo = (timestamp: Date) => {
