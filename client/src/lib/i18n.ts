@@ -25,6 +25,11 @@ export const resources = {
       zoomIn: "Zoom In",
       zoomOut: "Zoom Out",
       recenter: "Recenter Map",
+      verifiedRadar: "Verified Radar Control",
+      unverifiedRadar: "Unverified Radar Control",
+      reportCount: "Reported {{count}} times",
+      verifiedStatus: "Verified",
+      unverifiedStatus: "Unverified"
     }
   },
   no: {
@@ -53,6 +58,11 @@ export const resources = {
       zoomIn: "Zoom inn",
       zoomOut: "Zoom ut",
       recenter: "Sentrer kartet",
+      verifiedRadar: "Bekreftet Radarkontroll",
+      unverifiedRadar: "Ikke bekreftet Radarkontroll",
+      reportCount: "Rapportert {{count}} ganger",
+      verifiedStatus: "Bekreftet",
+      unverifiedStatus: "Ikke bekreftet"
     }
   }
 };

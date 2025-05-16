@@ -19,6 +19,8 @@ export const radarReports = pgTable("radar_reports", {
   location: text("location"),
   reportedAt: timestamp("reported_at").notNull().defaultNow(),
   active: boolean("active").notNull().default(true),
+  verified: boolean("verified").notNull().default(false),
+  verifiedCount: integer("verified_count").notNull().default(1),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({

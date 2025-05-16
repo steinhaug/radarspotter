@@ -58,24 +58,80 @@ export class MemStorage implements IStorage {
     const id = this.currentReportId++;
     const now = new Date();
     
+    // Check for nearby reports within 300 meters and within the last 60 minutes
+    // to verify this report
+    const nearbyReports = Array.from(this.radarReports.values()).filter(report => {
+      // Only consider active reports
+      if (!report.active) return false;
+      
+      // Check if within the last 60 minutes
+      const reportTime = new Date(report.reportedAt).getTime();
+      const timeDiff = now.getTime() - reportTime;
+      const isWithinTimeWindow = timeDiff <= 60 * 60 * 1000; // 60 minutes
+      
+      if (!isWithinTimeWindow) return false;
+      
+      // Check if within 300 meters
+      const distance = this.calculateDistance(
+        insertReport.latitude, 
+        insertReport.longitude, 
+        report.latitude, 
+        report.longitude
+      );
+      
+      return distance <= 0.3; // 300 meters (in km)
+    });
+    
+    const isVerified = nearbyReports.length > 0;
+    const verifiedCount = isVerified ? nearbyReports[0].verifiedCount + 1 : 1;
+    
+    // If we found a nearby report, we need to mark it as verified too
+    if (isVerified && nearbyReports.length > 0) {
+      const nearbyReport = nearbyReports[0];
+      this.radarReports.set(nearbyReport.id, {
+        ...nearbyReport,
+        verified: true,
+        verifiedCount
+      });
+    }
+    
     const newReport: RadarReport = {
       ...insertReport,
       id,
       reportedAt: now,
       active: true,
+      verified: isVerified,
+      verifiedCount
     };
     
     this.radarReports.set(id, newReport);
     
-    // Automatically expire reports after 30 minutes
+    // Automatically expire reports after 3 hours
     setTimeout(() => {
       const report = this.radarReports.get(id);
       if (report) {
         this.radarReports.set(id, { ...report, active: false });
       }
-    }, 30 * 60 * 1000);
+    }, 3 * 60 * 60 * 1000);
     
     return newReport;
+  }
+  
+  // Helper function to calculate distance between two coordinates in kilometers
+  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371; // Radius of the earth in km
+    const dLat = this.deg2rad(lat2 - lat1);
+    const dLon = this.deg2rad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+  
+  private deg2rad(deg: number): number {
+    return deg * (Math.PI / 180);
   }
 
   async getActiveRadarReports(): Promise<RadarReport[]> {
