@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { getDefaultLanguage } from '@/lib/i18n';
 import mapboxgl from 'mapbox-gl';
+import { initializeMapbox } from '@/lib/mapbox';
 
 interface AppContextProps {
   language: string;
@@ -18,6 +19,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<string>(getDefaultLanguage());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
+
+  // Initialize Mapbox when the component mounts
+  useEffect(() => {
+    // Get the Mapbox API key from environment variables
+    const mapboxKey = import.meta.env.MAPBOX_API_KEY;
+    
+    if (mapboxKey) {
+      initializeMapbox(mapboxKey);
+    }
+  }, []);
 
   const toggleLanguage = () => {
     setLanguage(language === 'en' ? 'no' : 'en');

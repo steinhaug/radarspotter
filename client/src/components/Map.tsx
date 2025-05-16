@@ -6,6 +6,7 @@ import RadarMarker from './RadarMarker';
 import { useQuery } from '@tanstack/react-query';
 import { RadarReport } from '@shared/schema';
 import mapboxgl from 'mapbox-gl';
+import { useMapboxKey } from '@/hooks/use-i18n';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 export default function Map() {
@@ -15,6 +16,7 @@ export default function Map() {
   const { position } = useGeolocation();
   const { setMapInstance } = useAppContext();
   const [mapLoaded, setMapLoaded] = useState(false);
+  const mapboxKey = useMapboxKey();
 
   // Query for radar reports
   const { data: radarReports } = useQuery<RadarReport[]>({
@@ -23,25 +25,32 @@ export default function Map() {
 
   // Initialize map when component mounts
   useEffect(() => {
-    if (!mapContainerRef.current) return;
+    if (!mapContainerRef.current || !mapboxKey) return;
     
-    const map = createMap('map', {
-      style: 'mapbox://styles/mapbox/streets-v11',
-      zoom: 14,
-    });
+    // Initialize Mapbox with API key before creating the map
+    mapboxgl.accessToken = mapboxKey;
+    
+    try {
+      const map = createMap('map', {
+        style: 'mapbox://styles/mapbox/streets-v11',
+        zoom: 14,
+      });
 
-    map.on('load', () => {
-      setMapLoaded(true);
-      mapRef.current = map;
-      setMapInstance(map);
-    });
+      map.on('load', () => {
+        setMapLoaded(true);
+        mapRef.current = map;
+        setMapInstance(map);
+      });
 
-    return () => {
-      map.remove();
-      mapRef.current = null;
-      setMapInstance(null);
-    };
-  }, [setMapInstance]);
+      return () => {
+        map.remove();
+        mapRef.current = null;
+        setMapInstance(null);
+      };
+    } catch (error) {
+      console.error("Error initializing map:", error);
+    }
+  }, [setMapInstance, mapboxKey]);
 
   // Update user's location marker
   useEffect(() => {

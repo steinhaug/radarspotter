@@ -5,6 +5,11 @@ import { z } from "zod";
 import { reportSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Add endpoint to expose Mapbox API key
+  app.get('/api/mapbox-key', (req, res) => {
+    res.json({ key: process.env.MAPBOX_API_KEY });
+  });
+  
   // Add radar report endpoint
   app.post('/api/radar-reports', async (req, res) => {
     try {

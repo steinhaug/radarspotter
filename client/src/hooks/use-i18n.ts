@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { resources } from '@/lib/i18n';
 
@@ -26,7 +26,21 @@ export function useTranslation() {
 }
 
 export function useMapboxKey() {
-  // This would normally come from environment variables in a real app
-  // Using Mapbox public token
-  return 'pk.eyJ1IjoiYWdyZWdvcnlsaXUiLCJhIjoiY2tta3dnbzZlMG10czJvcDltZ3VtMGl2ciJ9.BGbJxFtTcO2eLnM33aX1zw';
+  const [key, setKey] = useState<string>('');
+
+  useEffect(() => {
+    // Fetch the Mapbox API key from server
+    fetch('/api/mapbox-key')
+      .then(res => res.json())
+      .then(data => {
+        if (data.key) {
+          setKey(data.key);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to fetch Mapbox API key:', err);
+      });
+  }, []);
+
+  return key;
 }
