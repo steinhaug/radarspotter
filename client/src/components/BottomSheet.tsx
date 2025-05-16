@@ -64,7 +64,7 @@ export default function BottomSheet() {
         report.latitude, 
         report.longitude
       );
-      return distance <= 20; // 20km radius
+      return distance <= 40; // 40km radius
     });
     
     return { sortedReports: sorted, nearbyReports: nearby };

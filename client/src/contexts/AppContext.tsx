@@ -20,6 +20,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
 
+  // Initialize language detection and storage
+  useEffect(() => {
+    try {
+      // Check if language is stored in local storage
+      const storedLang = localStorage.getItem('preferredLanguage');
+      if (storedLang && (storedLang === 'en' || storedLang === 'no')) {
+        setLanguage(storedLang);
+      } else {
+        // Use browser language as fallback
+        const detectedLang = getDefaultLanguage();
+        setLanguage(detectedLang);
+        localStorage.setItem('preferredLanguage', detectedLang);
+      }
+    } catch (error) {
+      // Fallback to default language if localStorage is not available
+      console.error("Error accessing localStorage:", error);
+      setLanguage('en');
+    }
+  }, []);
+  
   // Initialize Mapbox when the component mounts
   useEffect(() => {
     // Get the Mapbox API key from environment variables
@@ -31,7 +51,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const toggleLanguage = () => {
-    setLanguage(language === 'en' ? 'no' : 'en');
+    const newLang = language === 'en' ? 'no' : 'en';
+    setLanguage(newLang);
+    try {
+      localStorage.setItem('preferredLanguage', newLang);
+    } catch (error) {
+      console.error("Error saving language preference:", error);
+    }
   };
 
   const toggleSettings = () => {
