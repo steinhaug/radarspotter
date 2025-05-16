@@ -79,9 +79,24 @@ export class MemStorage implements IStorage {
   }
 
   async getActiveRadarReports(): Promise<RadarReport[]> {
-    // Filter for active reports only, and sort by most recent first
+    const currentTime = new Date().getTime();
+    const threeHoursInMs = 3 * 60 * 60 * 1000;
+    
+    // Filter for reports less than 3 hours old and active, then sort by most recent first
     return Array.from(this.radarReports.values())
-      .filter(report => report.active)
+      .filter(report => {
+        const reportTime = new Date(report.reportedAt).getTime();
+        const isLessThanThreeHoursOld = (currentTime - reportTime) < threeHoursInMs;
+        
+        // If not less than 3 hours old, mark it as inactive
+        if (!isLessThanThreeHoursOld && report.active) {
+          const reportId = report.id;
+          this.radarReports.set(reportId, { ...report, active: false });
+          return false;
+        }
+        
+        return report.active;
+      })
       .sort((a, b) => {
         const dateA = new Date(a.reportedAt).getTime();
         const dateB = new Date(b.reportedAt).getTime();
