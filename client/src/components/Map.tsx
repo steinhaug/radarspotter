@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { createMap } from '@/lib/mapbox';
 import { useGeolocation } from '@/hooks/use-geolocation';
 import { useAppContext } from '@/contexts/AppContext';
@@ -85,9 +85,37 @@ export default function Map() {
     }
   }, [position, mapLoaded]);
 
+  // Create a filtered list of unique reports by location
+  const uniqueReports = useMemo(() => {
+    if (!radarReports || radarReports.length === 0) return [];
+    
+    // Unique coordinates we've already processed (using a string key of lat,lng)
+    const processedCoords = new Set<string>();
+    const result: RadarReport[] = [];
+    
+    // Sort reports by most recent first
+    const sortedReports = [...radarReports].sort(
+      (a, b) => new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime()
+    );
+    
+    // For each report, check if we've already seen a report at this location
+    for (const report of sortedReports) {
+      // Create a key for this location (rounded to 4 decimal places to group very close reports)
+      const locationKey = `${report.latitude.toFixed(4)},${report.longitude.toFixed(4)}`;
+      
+      // If we haven't processed this location yet, add it to our results
+      if (!processedCoords.has(locationKey)) {
+        processedCoords.add(locationKey);
+        result.push(report);
+      }
+    }
+    
+    return result;
+  }, [radarReports]);
+
   return (
     <div id="map" ref={mapContainerRef} className="map-container">
-      {mapLoaded && radarReports && radarReports.map(report => (
+      {mapLoaded && mapRef.current && uniqueReports.map(report => (
         <RadarMarker 
           key={report.id}
           report={report} 
