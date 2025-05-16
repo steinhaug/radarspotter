@@ -43,18 +43,7 @@ export default function BottomSheet() {
     queryKey: ['/api/radar-reports'],
   });
 
-  // Auto-open bottom sheet if there are nearby radar reports
-  useEffect(() => {
-    if (reportsLoaded && position && firstLoad.current) {
-      firstLoad.current = false;
-      
-      // Check if there are any reports within 20km
-      if (nearbyReports.length > 0) {
-        // Automatically open the bottom sheet
-        setIsOpen(true);
-      }
-    }
-  }, [reportsLoaded, position, nearbyReports]);
+  // The auto-open effect moved after nearbyReports is defined
   
   // Set up event listeners for dragging
   useEffect(() => {
