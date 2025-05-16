@@ -23,6 +23,7 @@ export class MemStorage implements IStorage {
   private currentUserId: number;
   private currentReportId: number;
   private readonly TRIAL_DURATION_DAYS = 30;
+  private readonly RADAR_REPORT_EXPIRATION_HOURS = 3; // 3 hours expiration time
 
   constructor() {
     this.users = new Map();
@@ -63,8 +64,46 @@ export class MemStorage implements IStorage {
       active: true
     };
     
+    // Adding a third report for testing
+    const report3: RadarReport = {
+      id: this.currentReportId++,
+      userId: defaultUser.id,
+      latitude: 58.1625123,
+      longitude: 8.0123456,
+      location: null,
+      reportedAt: new Date(now.getTime() - 45 * 60 * 1000), // 45 minutes ago
+      active: true
+    };
+    
     this.radarReports.set(report1.id, report1);
     this.radarReports.set(report2.id, report2);
+    this.radarReports.set(report3.id, report3);
+    
+    // Set up expiration timers for all initial reports
+    this.setupExpirationTimer(report1.id);
+    this.setupExpirationTimer(report2.id);
+    this.setupExpirationTimer(report3.id);
+  }
+
+  // Helper to set up expiration timers for reports
+  private setupExpirationTimer(reportId: number): void {
+    const report = this.radarReports.get(reportId);
+    if (!report) return;
+    
+    const now = new Date();
+    const reportTime = new Date(report.reportedAt).getTime();
+    const elapsedMs = now.getTime() - reportTime;
+    const totalExpirationMs = this.RADAR_REPORT_EXPIRATION_HOURS * 60 * 60 * 1000;
+    const remainingMs = Math.max(0, totalExpirationMs - elapsedMs);
+    
+    // Schedule expiration
+    setTimeout(() => {
+      const currentReport = this.radarReports.get(reportId);
+      if (currentReport) {
+        this.radarReports.set(reportId, { ...currentReport, active: false });
+        console.log(`Report ${reportId} expired after ${this.RADAR_REPORT_EXPIRATION_HOURS} hours`);
+      }
+    }, remainingMs);
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -106,13 +145,14 @@ export class MemStorage implements IStorage {
     
     this.radarReports.set(id, newReport);
     
-    // Automatically expire reports after 3 hours (instead of 30 minutes)
+    // Set expiration timer for the new report
     setTimeout(() => {
       const report = this.radarReports.get(id);
       if (report) {
         this.radarReports.set(id, { ...report, active: false });
+        console.log(`Report ${id} expired after ${this.RADAR_REPORT_EXPIRATION_HOURS} hours`);
       }
-    }, 3 * 60 * 60 * 1000); // 3 hours in milliseconds
+    }, this.RADAR_REPORT_EXPIRATION_HOURS * 60 * 60 * 1000); // 3 hours in milliseconds
     
     return newReport;
   }
