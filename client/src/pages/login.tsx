@@ -1,40 +1,25 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useTranslation } from '@/hooks/use-i18n';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const [, setLocation] = useLocation();
   const { t } = useTranslation();
+  const { login } = useAuth();
+  const loading = login.isPending;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      if (response.ok) {
-        // After successful login, redirect to home
-        setLocation('/');
-      } else {
-        const data = await response.json();
-        setError(data.error || t('invalidCredentials'));
-      }
-    } catch (err) {
-      setError(t('loginFailed'));
-    } finally {
-      setLoading(false);
+      await login.mutateAsync({ username, password });
+    } catch (err: any) {
+      setError(err.message || t('invalidCredentials'));
     }
   };
 
@@ -91,7 +76,7 @@ export default function Login() {
               disabled={loading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
             >
-              {loading ? t('loggingIn') : t('login')}
+              {login.isPending ? t('loggingIn') : t('login')}
             </button>
             
             <div className="text-sm text-center">

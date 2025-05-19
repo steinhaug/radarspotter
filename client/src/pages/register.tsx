@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useTranslation } from '@/hooks/use-i18n';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Register() {
   const [username, setUsername] = useState('');
@@ -8,9 +9,9 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [language, setLanguage] = useState('no'); // Default to Norwegian
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const [, setLocation] = useLocation();
   const { t } = useTranslation();
+  const { register } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,29 +22,11 @@ export default function Register() {
       setError(t('passwordsDoNotMatch'));
       return;
     }
-    
-    setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password, language }),
-      });
-
-      if (response.ok) {
-        // After successful registration, redirect to login
-        setLocation('/login');
-      } else {
-        const data = await response.json();
-        setError(data.error || t('registrationFailed'));
-      }
-    } catch (err) {
-      setError(t('registrationFailed'));
-    } finally {
-      setLoading(false);
+      await register.mutateAsync({ username, password, language });
+    } catch (err: any) {
+      setError(err.message || t('registrationFailed'));
     }
   };
 
@@ -126,10 +109,10 @@ export default function Register() {
           <div className="flex flex-col space-y-3">
             <button
               type="submit"
-              disabled={loading}
+              disabled={register.isPending}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
             >
-              {loading ? t('registering') : t('register')}
+              {register.isPending ? t('registering') : t('register')}
             </button>
             
             <div className="text-sm text-center">
