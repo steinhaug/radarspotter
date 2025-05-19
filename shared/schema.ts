@@ -11,6 +11,13 @@ export const users = pgTable("users", {
   subscribed: boolean("subscribed").notNull().default(false),
 });
 
+// Session table for express-session
+export const sessions = pgTable("sessions", {
+  sid: text("sid").primaryKey(),
+  sess: text("sess").notNull(),
+  expire: timestamp("expire", { precision: 6 }).notNull(),
+});
+
 export const radarReports = pgTable("radar_reports", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id),

@@ -36,7 +36,16 @@ export const resources = {
       unverifiedRadar: "Unverified Radar Control",
       reportCount: "Reported {{count}} times",
       verifiedStatus: "Verified",
-      unverifiedStatus: "Unverified"
+      unverifiedStatus: "Unverified",
+      // Authentication related
+      login: "Log in",
+      loginInstruction: "Sign in to your RadarAlarm account",
+      username: "Username",
+      password: "Password",
+      loginFailed: "Login failed. Please check your credentials and try again.",
+      loggingIn: "Logging in...",
+      logout: "Log out",
+      radar: "Radar"
     }
   },
   no: {
@@ -76,7 +85,16 @@ export const resources = {
       unverifiedRadar: "Ikke bekreftet Radarkontroll",
       reportCount: "Rapportert {{count}} ganger",
       verifiedStatus: "Bekreftet",
-      unverifiedStatus: "Ikke bekreftet"
+      unverifiedStatus: "Ikke bekreftet",
+      // Authentication related
+      login: "Logg inn",
+      loginInstruction: "Logg inn på din RadarAlarm-konto",
+      username: "Brukernavn",
+      password: "Passord",
+      loginFailed: "Innlogging mislyktes. Sjekk brukernavn og passord og prøv igjen.",
+      loggingIn: "Logger inn...",
+      logout: "Logg ut",
+      radar: "Radar"
     }
   }
 };

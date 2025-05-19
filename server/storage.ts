@@ -15,6 +15,10 @@ export interface IStorage {
   createRadarReport(report: InsertRadarReport): Promise<RadarReport>;
   getActiveRadarReports(): Promise<RadarReport[]>;
   getTrialStatus(userId: number): Promise<{ daysLeft: number, isSubscribed: boolean, trialStartDate: string }>;
+  
+  // New authentication methods
+  registerUser(user: InsertUser): Promise<User>;
+  updateUserPassword(userId: number, newPassword: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
