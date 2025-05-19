@@ -1,8 +1,9 @@
-import type { Express } from "express";
+import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
 import { reportSchema } from "@shared/schema";
+import { isAuthenticated } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Add endpoint to expose Mapbox API key
@@ -10,15 +11,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ key: process.env.MAPBOX_API_KEY });
   });
   
-  // Add radar report endpoint
-  app.post('/api/radar-reports', async (req, res) => {
+  // Add radar report endpoint - protect with authentication
+  app.post('/api/radar-reports', isAuthenticated, async (req: Request, res) => {
     try {
       // Validate request body
       const validatedData = reportSchema.parse(req.body);
+      const user = req.user as any;
       
-      // Create radar report
+      // Create radar report with the authenticated user's ID
       const newReport = await storage.createRadarReport({
-        userId: 1, // Default user ID since we're not implementing authentication
+        userId: user.id || null,
         ...validatedData
       });
       
@@ -91,11 +93,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get user trial status
-  app.get('/api/user/trial-status', async (req, res) => {
+  // Get user trial status - protect with authentication
+  app.get('/api/user/trial-status', isAuthenticated, async (req, res) => {
     try {
-      // Use a dummy user ID for demonstration
-      const trialInfo = await storage.getTrialStatus(1);
+      const user = req.user as any;
+      const trialInfo = await storage.getTrialStatus(user.id);
       res.json(trialInfo);
     } catch (error) {
       res.status(500).json({ message: 'Failed to fetch trial status' });

@@ -174,8 +174,11 @@ export class MemStorage implements IStorage {
     
     // Create the new report
     const newReport: RadarReport = {
-      ...insertReport,
       id,
+      userId: insertReport.userId || 1, // Default to user ID 1 if not provided
+      latitude: insertReport.latitude,
+      longitude: insertReport.longitude,
+      location: insertReport.location || '',
       reportedAt: now,
       active: true,
       verified: isVerified,

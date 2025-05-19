@@ -45,7 +45,16 @@ export const resources = {
       loginFailed: "Login failed. Please check your credentials and try again.",
       loggingIn: "Logging in...",
       logout: "Log out",
-      radar: "Radar"
+      radar: "Radar",
+      register: "Register",
+      registerInstruction: "Create a new RadarAlarm account",
+      confirmPassword: "Confirm Password",
+      passwordsDoNotMatch: "Passwords do not match",
+      registrationFailed: "Registration failed. Please try again.",
+      registering: "Registering...",
+      dontHaveAccount: "Don't have an account?",
+      alreadyHaveAccount: "Already have an account?",
+      invalidCredentials: "Invalid username or password"
     }
   },
   no: {
@@ -94,7 +103,16 @@ export const resources = {
       loginFailed: "Innlogging mislyktes. Sjekk brukernavn og passord og prøv igjen.",
       loggingIn: "Logger inn...",
       logout: "Logg ut",
-      radar: "Radar"
+      radar: "Radar",
+      register: "Registrer",
+      registerInstruction: "Opprett en ny RadarAlarm-konto",
+      confirmPassword: "Bekreft passord",
+      passwordsDoNotMatch: "Passordene stemmer ikke overens",
+      registrationFailed: "Registrering mislyktes. Vennligst prøv igjen.",
+      registering: "Registrerer...",
+      dontHaveAccount: "Har du ikke en konto?",
+      alreadyHaveAccount: "Har du allerede en konto?",
+      invalidCredentials: "Ugyldig brukernavn eller passord"
     }
   }
 };

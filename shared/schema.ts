@@ -20,10 +20,10 @@ export const sessions = pgTable("sessions", {
 
 export const radarReports = pgTable("radar_reports", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
+  userId: integer("user_id").references(() => users.id).notNull().default(1),
   latitude: doublePrecision("latitude").notNull(),
   longitude: doublePrecision("longitude").notNull(),
-  location: text("location"),
+  location: text("location").default(""),
   reportedAt: timestamp("reported_at").notNull().defaultNow(),
   active: boolean("active").notNull().default(true),
   verified: boolean("verified").notNull().default(false),
