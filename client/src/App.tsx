@@ -10,29 +10,14 @@ import Register from "@/pages/register";
 import { useEffect, useState } from "react";
 import { initializeMapbox } from "./lib/mapbox";
 import { AppProvider } from "./contexts/AppContext";
+import { useAuth } from "@/hooks/useAuth";
 
 // Auth provider component
 function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [authenticated, setAuthenticated] = useState<boolean | null>(null);
-  const [_, navigate] = useLocation();
-
-  useEffect(() => {
-    // Check if user is already logged in
-    fetch('/api/auth/user')
-      .then(res => {
-        if (res.ok) {
-          setAuthenticated(true);
-        } else {
-          setAuthenticated(false);
-        }
-      })
-      .catch(() => {
-        setAuthenticated(false);
-      });
-  }, []);
-
-  // Show nothing while checking auth status
-  if (authenticated === null) {
+  const { isLoading } = useAuth();
+  
+  // Show loading spinner while checking auth status
+  if (isLoading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
 
@@ -41,32 +26,22 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 
 // Protected route component
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
-  const [authenticated, setAuthenticated] = useState<boolean | null>(null);
+  const { isAuthenticated, isLoading } = useAuth();
   const [_, navigate] = useLocation();
 
   useEffect(() => {
-    // Check if user is authenticated
-    fetch('/api/auth/user')
-      .then(res => {
-        if (res.ok) {
-          setAuthenticated(true);
-        } else {
-          setAuthenticated(false);
-          navigate('/login');
-        }
-      })
-      .catch(() => {
-        setAuthenticated(false);
-        navigate('/login');
-      });
-  }, [navigate]);
+    // Redirect to login if not authenticated and done loading
+    if (!isLoading && !isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
-  // Show nothing while checking auth status
-  if (authenticated === null) {
+  // Show loading while checking auth status
+  if (isLoading) {
     return <div className="flex items-center justify-center h-screen">Checking authentication...</div>;
   }
 
-  return authenticated ? <Component /> : null;
+  return isAuthenticated ? <Component /> : null;
 }
 
 function Router() {
