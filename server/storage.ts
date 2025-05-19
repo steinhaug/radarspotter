@@ -34,6 +34,32 @@ export class MemStorage implements IStorage {
     this.currentUserId = 1;
     this.currentReportId = 1;
   }
+  
+  // Implementation of authentication methods
+  async registerUser(userData: InsertUser): Promise<User> {
+    const id = this.currentUserId++;
+    
+    // Create user with basic info
+    const user: User = {
+      id,
+      username: userData.username,
+      password: userData.password, // In a real app, this would be hashed
+      language: userData.language ?? 'no', // Default to Norwegian, use nullish coalescing
+      trialStartDate: new Date(),
+      subscribed: false
+    };
+    
+    this.users.set(id, user);
+    return user;
+  }
+  
+  async updateUserPassword(userId: number, newPassword: string): Promise<void> {
+    const user = await this.getUser(userId);
+    if (user) {
+      user.password = newPassword;
+      this.users.set(userId, user);
+    }
+  }
 
   async getUser(id: number): Promise<User | undefined> {
     return this.users.get(id);

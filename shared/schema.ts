@@ -34,6 +34,8 @@ export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
   language: true,
+}).extend({
+  language: z.string().default('no')
 });
 
 export const insertRadarReportSchema = createInsertSchema(radarReports).pick({
