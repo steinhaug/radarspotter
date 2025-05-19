@@ -85,32 +85,46 @@ export default function Map() {
     }
   }, [position, mapLoaded]);
 
-  // Create a filtered list of unique reports by location
+  // Process reports to create unique markers and verify reports with multiple entries
   const uniqueReports = useMemo(() => {
     if (!radarReports || radarReports.length === 0) return [];
     
-    // Unique coordinates we've already processed (using a string key of lat,lng)
-    const processedCoords = new Set<string>();
-    const result: RadarReport[] = [];
+    // Group reports by location (within 50 meters of each other)
+    const locationGroups: { [key: string]: RadarReport[] } = {};
     
-    // Sort reports by most recent first
-    const sortedReports = [...radarReports].sort(
-      (a, b) => new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime()
-    );
-    
-    // For each report, check if we've already seen a report at this location
-    for (const report of sortedReports) {
-      // Create a key for this location (rounded to 4 decimal places to group very close reports)
+    for (const report of radarReports) {
+      // Create a location key using rounded coordinates
       const locationKey = `${report.latitude.toFixed(4)},${report.longitude.toFixed(4)}`;
       
-      // If we haven't processed this location yet, add it to our results
-      if (!processedCoords.has(locationKey)) {
-        processedCoords.add(locationKey);
-        result.push(report);
+      if (!locationGroups[locationKey]) {
+        locationGroups[locationKey] = [report];
+      } else {
+        locationGroups[locationKey].push(report);
       }
     }
     
-    return result;
+    // Create a single representative report for each location
+    const processedReports = Object.values(locationGroups).map(reportsAtLocation => {
+      // Sort by most recent first
+      const sortedReports = [...reportsAtLocation].sort(
+        (a, b) => new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime()
+      );
+      
+      // Use the most recent report as our base
+      const mostRecent = sortedReports[0];
+      
+      // Consider it verified if there's more than one report at this location
+      const isVerified = reportsAtLocation.length > 1;
+      
+      // Create our representative report with verification status
+      return {
+        ...mostRecent,
+        verified: isVerified,
+        verifiedCount: reportsAtLocation.length
+      };
+    });
+    
+    return processedReports;
   }, [radarReports]);
 
   return (

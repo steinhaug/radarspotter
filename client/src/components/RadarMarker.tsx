@@ -16,11 +16,17 @@ export default function RadarMarker({ report, map }: RadarMarkerProps) {
   useEffect(() => {
     if (!map) return;
 
+    // Log the report details to debug
+    console.log("Rendering marker:", report.id, "Verified:", report.verified, "Count:", report.verifiedCount);
+
     // Create custom HTML element for the marker
     const el = document.createElement('div');
     
     // Different styling based on verification status
-    if (report.verified) {
+    // A report is verified if either the 'verified' flag is true OR there are 2+ reports at this location
+    const isVerified = report.verified || (report.verifiedCount && report.verifiedCount > 1);
+    
+    if (isVerified) {
       // Verified report - red with solid appearance
       el.className = 'relative w-8 h-8 bg-red-500 rounded-full flex items-center justify-center pin-drop shadow-lg';
       
