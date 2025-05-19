@@ -43,6 +43,10 @@ export const insertRadarReportSchema = createInsertSchema(radarReports).pick({
   latitude: true,
   longitude: true,
   location: true,
+}).extend({
+  // Ensure these fields are properly typed with defaults
+  location: z.string().nullable().default(''),
+  userId: z.number().default(1)
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
