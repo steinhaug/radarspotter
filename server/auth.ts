@@ -136,6 +136,43 @@ export const setupAuth = (app: Express) => {
       trialStartDate: user.trialStartDate
     });
   });
+  
+  // Registration endpoint
+  app.post('/api/auth/register', async (req, res) => {
+    try {
+      const { username, password, language } = req.body;
+      
+      // Check if username already exists
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(400).json({ error: 'Username already exists' });
+      }
+      
+      // Register new user
+      const newUser = await storage.registerUser({
+        username,
+        password, // Will be hashed in registerUser method
+        language: language || 'no' // Default to Norwegian
+      });
+      
+      // Log in the newly registered user
+      req.login(newUser, (err) => {
+        if (err) {
+          return res.status(500).json({ error: 'Failed to establish session after registration' });
+        }
+        
+        return res.status(201).json({
+          id: newUser.id,
+          username: newUser.username,
+          language: newUser.language,
+          trialStartDate: newUser.trialStartDate
+        });
+      });
+    } catch (error) {
+      console.error('Registration error:', error);
+      res.status(500).json({ error: 'Failed to register user' });
+    }
+  });
 };
 
 // Middleware to check if user is authenticated

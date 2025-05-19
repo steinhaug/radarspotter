@@ -16,7 +16,7 @@ export interface IStorage {
   getActiveRadarReports(): Promise<RadarReport[]>;
   getTrialStatus(userId: number): Promise<{ daysLeft: number, isSubscribed: boolean, trialStartDate: string }>;
   
-  // New authentication methods
+  // Authentication methods
   registerUser(user: InsertUser): Promise<User>;
   updateUserPassword(userId: number, newPassword: string): Promise<void>;
 }

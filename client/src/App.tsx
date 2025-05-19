@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Login from "@/pages/login";
+import Register from "@/pages/register";
 import { useEffect, useState } from "react";
 import { initializeMapbox } from "./lib/mapbox";
 import { AppProvider } from "./contexts/AppContext";
@@ -72,6 +73,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      <Route path="/register" component={Register} />
       <Route path="/">
         <ProtectedRoute component={Home} />
       </Route>

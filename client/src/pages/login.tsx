@@ -25,10 +25,11 @@ export default function Login() {
       });
 
       if (response.ok) {
+        // After successful login, redirect to home
         setLocation('/');
       } else {
         const data = await response.json();
-        setError(data.error || t('loginFailed'));
+        setError(data.error || t('invalidCredentials'));
       }
     } catch (err) {
       setError(t('loginFailed'));
@@ -49,9 +50,9 @@ export default function Login() {
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
+          <div className="rounded-md shadow-sm space-y-2">
             <div>
-              <label htmlFor="username" className="sr-only">
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
                 {t('username')}
               </label>
               <input
@@ -59,14 +60,13 @@ export default function Login() {
                 name="username"
                 type="text"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                placeholder={t('username')}
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
             </div>
             <div>
-              <label htmlFor="password" className="sr-only">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 {t('password')}
               </label>
               <input
@@ -74,8 +74,7 @@ export default function Login() {
                 name="password"
                 type="password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                placeholder={t('password')}
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -86,7 +85,7 @@ export default function Login() {
             <div className="text-red-500 text-sm text-center">{error}</div>
           )}
 
-          <div>
+          <div className="flex flex-col space-y-3">
             <button
               type="submit"
               disabled={loading}
@@ -94,6 +93,20 @@ export default function Login() {
             >
               {loading ? t('loggingIn') : t('login')}
             </button>
+            
+            <div className="text-sm text-center">
+              {t('dontHaveAccount')} {' '}
+              <a 
+                href="/register" 
+                className="font-medium text-primary hover:text-primary-600"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setLocation('/register');
+                }}
+              >
+                {t('register')}
+              </a>
+            </div>
           </div>
         </form>
       </div>
