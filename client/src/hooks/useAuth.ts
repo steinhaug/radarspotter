@@ -26,7 +26,7 @@ export function useAuth() {
   
   // Login mutation
   const login = useMutation({
-    mutationFn: async (credentials: { username: string; password: string }) => {
+    mutationFn: async (credentials: { email: string; password: string }) => {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -52,7 +52,7 @@ export function useAuth() {
   
   // Register mutation
   const register = useMutation({
-    mutationFn: async (userData: { username: string; password: string; language: string }) => {
+    mutationFn: async (userData: { username: string; email: string; password: string; language: string }) => {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
