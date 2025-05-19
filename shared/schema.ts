@@ -58,7 +58,7 @@ export type RadarReport = typeof radarReports.$inferSelect;
 
 // Extended schemas for client validation
 export const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
+  email: z.string().min(1, "Email is required").email("Invalid email format"),
   password: z.string().min(1, "Password is required"),
 });
 
