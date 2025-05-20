@@ -43,6 +43,10 @@ app.use((req, res, next) => {
   try {
     await createTablesIfNotExist();
     console.log("Database tables created successfully");
+    
+    // Initialize achievements
+    const { initializeAchievements } = await import('./achievements');
+    await initializeAchievements();
   } catch (error) {
     console.error("Error creating database tables:", error);
   }
