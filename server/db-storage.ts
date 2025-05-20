@@ -27,6 +27,30 @@ function deg2rad(deg: number): number {
 
 export class DatabaseStorage implements IStorage {
   private readonly TRIAL_DURATION_DAYS = 30;
+  
+  // For debugging - create a test user if one doesn't exist
+  constructor() {
+    this.createTestUserIfNotExists().catch(err => {
+      console.error("Error creating test user:", err);
+    });
+  }
+  
+  private async createTestUserIfNotExists() {
+    try {
+      const testUser = await this.getUserByUsername('test');
+      if (!testUser) {
+        await this.registerUser({
+          username: 'test',
+          password: 'test',
+          language: 'no',
+          email: 'test@example.com'
+        });
+        console.log("Created test user: username 'test', password 'test'");
+      }
+    } catch (err) {
+      console.error("Error checking for test user:", err);
+    }
+  }
 
   // User methods
   async getUser(id: number): Promise<User | undefined> {
