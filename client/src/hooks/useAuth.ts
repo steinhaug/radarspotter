@@ -4,8 +4,10 @@ import { useLocation } from "wouter";
 interface AuthUser {
   id: number;
   username: string;
+  email: string;
   language: string;
   trialStartDate: string;
+  subscribed: boolean;
 }
 
 export function useAuth() {

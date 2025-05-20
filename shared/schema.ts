@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -31,6 +31,27 @@ export const radarReports = pgTable("radar_reports", {
   verifiedCount: integer("verified_count").notNull().default(1),
 });
 
+// Achievements table
+export const achievements = pgTable("achievements", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  icon: text("icon").notNull(),
+  maxProgress: integer("max_progress").notNull().default(1),
+});
+
+// User achievements progress tracking
+export const userAchievements = pgTable("user_achievements", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  achievementId: integer("achievement_id").references(() => achievements.id).notNull(),
+  progress: integer("progress").notNull().default(0),
+  unlocked: boolean("unlocked").notNull().default(false),
+  unlockedAt: timestamp("unlocked_at"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -55,6 +76,9 @@ export type User = typeof users.$inferSelect;
 
 export type InsertRadarReport = z.infer<typeof insertRadarReportSchema>;
 export type RadarReport = typeof radarReports.$inferSelect;
+
+export type Achievement = typeof achievements.$inferSelect;
+export type UserAchievement = typeof userAchievements.$inferSelect;
 
 // Extended schemas for client validation
 export const loginSchema = z.object({
