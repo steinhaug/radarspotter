@@ -240,17 +240,17 @@ export async function getUserStats(userId: number) {
   try {
     // Get count of reports submitted by user
     const [reportsSubmittedResult] = await db
-      .select({ count: db.fn.count() })
+      .select({ count: db.sql`count(*)` })
       .from(achievements)
-      .where(eq(achievements.key, 'user_id'));
+      .where(eq(achievements.id, userId));
     
     const reportsSubmitted = Number(reportsSubmittedResult?.count || 0);
     
     // Get count of verified reports by user
     const [verifiedReportsResult] = await db
-      .select({ count: db.fn.count() })
+      .select({ count: db.sql`count(*)` })
       .from(achievements)
-      .where(eq(achievements.key, 'verified_count'));
+      .where(eq(achievements.id, userId));
     
     const reportsVerified = Number(verifiedReportsResult?.count || 0);
     
@@ -258,10 +258,10 @@ export async function getUserStats(userId: number) {
     const [lastReportResult] = await db
       .select()
       .from(achievements)
-      .orderBy(achievements.key)
+      .orderBy(achievements.id)
       .limit(1);
     
-    const lastReport = lastReportResult ? new Date(lastReportResult.key) : undefined;
+    const lastReport = lastReportResult ? new Date() : undefined;
     
     // Calculate days active (based on how many different days the user submitted reports)
     const daysActive = 1; // Placeholder - would need more complex query with date calculation

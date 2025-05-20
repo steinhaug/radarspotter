@@ -56,6 +56,8 @@ export const resources = {
       dontHaveAccount: "Don't have an account?",
       alreadyHaveAccount: "Already have an account?",
       invalidCredentials: "Invalid username or password",
+      loginRequired: "Login Required",
+      pleaseLoginToAccessDashboard: "Please login to access your dashboard",
       // Dashboard
       dashboard: "Dashboard",
       dashboardDescription: "Track your activity and achievements",
@@ -141,6 +143,8 @@ export const resources = {
       dontHaveAccount: "Har du ikke en konto?",
       alreadyHaveAccount: "Har du allerede en konto?",
       invalidCredentials: "Ugyldig brukernavn eller passord",
+      loginRequired: "Innlogging kreves",
+      pleaseLoginToAccessDashboard: "Vennligst logg inn for å få tilgang til dashbordet ditt",
       // Dashboard
       dashboard: "Dashbord",
       dashboardDescription: "Følg aktiviteten din og oppnåelser",

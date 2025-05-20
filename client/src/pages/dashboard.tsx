@@ -50,6 +50,21 @@ export default function Dashboard() {
     }
   }, [user, navigate, achievementsLoading, statsLoading]);
 
+  if (!user && !achievementsLoading && !statsLoading) {
+    return <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <h2 className="text-xl font-semibold mb-2">{t('loginRequired')}</h2>
+        <p className="text-gray-600 mb-4">{t('pleaseLoginToAccessDashboard')}</p>
+        <button 
+          onClick={() => navigate('/login')}
+          className="bg-primary text-white py-2 px-4 rounded-md hover:bg-primary-600 transition-colors"
+        >
+          {t('login')}
+        </button>
+      </div>
+    </div>;
+  }
+  
   return (
     <div className="min-h-screen bg-gray-50 pt-16 pb-10">
       <div className="container px-4 mx-auto">
@@ -73,7 +88,7 @@ export default function Dashboard() {
                 <div>
                   <h3 className="text-xl font-semibold">{user?.username}</h3>
                   <p className="text-gray-500">{user?.email}</p>
-                  <p className="text-sm text-gray-400">{t('memberSince')}: {new Date(user?.trialStartDate).toLocaleDateString()}</p>
+                  <p className="text-sm text-gray-400">{t('memberSince')}: {user?.trialStartDate ? new Date(user.trialStartDate).toLocaleDateString() : '-'}</p>
                 </div>
               </div>
             </CardContent>

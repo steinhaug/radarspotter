@@ -104,6 +104,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User dashboard endpoints
+  // Get user achievements
+  app.get("/api/user/achievements", isAuthenticated, async (req, res) => {
+    const user = req.user as any;
+    try {
+      const { getUserAchievements } = await import('./achievements');
+      const achievements = await getUserAchievements(user.id, user.language || 'en');
+      res.json(achievements);
+    } catch (error) {
+      console.error("Error fetching achievements:", error);
+      res.status(500).json({ error: "Failed to fetch achievements" });
+    }
+  });
+
+  // Get user stats
+  app.get("/api/user/stats", isAuthenticated, async (req, res) => {
+    const user = req.user as any;
+    try {
+      const { getUserStats } = await import('./achievements');
+      const stats = await getUserStats(user.id);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching user stats:", error);
+      res.status(500).json({ error: "Failed to fetch user stats" });
+    }
+  });
+
   // Create test user if it doesn't exist
   try {
     const existingUser = await storage.getUserByUsername('testuser');
