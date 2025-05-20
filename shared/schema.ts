@@ -54,10 +54,12 @@ export const userAchievements = pgTable("user_achievements", {
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
+  email: true,
   password: true,
   language: true,
 }).extend({
-  language: z.string().default('no')
+  language: z.string().default('no'),
+  email: z.string().email("Invalid email format").nullable()
 });
 
 export const insertRadarReportSchema = createInsertSchema(radarReports).pick({

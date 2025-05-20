@@ -44,6 +44,7 @@ export class MemStorage implements IStorage {
     const user: User = {
       id,
       username: userData.username,
+      email: userData.email ?? null, // Handle email field
       password: userData.password, // In a real app, this would be hashed
       language: userData.language ?? 'no', // Default to Norwegian, use nullish coalescing
       trialStartDate: new Date(),
@@ -84,6 +85,7 @@ export class MemStorage implements IStorage {
     const user: User = { 
       ...insertUser, 
       id,
+      email: insertUser.email ?? null,
       trialStartDate: now,
       subscribed: false,
     };

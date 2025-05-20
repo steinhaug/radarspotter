@@ -135,15 +135,17 @@ export const setupAuth = (app: Express) => {
     res.json({
       id: user.id,
       username: user.username,
+      email: user.email,
       language: user.language,
-      trialStartDate: user.trialStartDate
+      trialStartDate: user.trialStartDate,
+      subscribed: user.subscribed
     });
   });
   
   // Registration endpoint
   app.post('/api/auth/register', async (req, res) => {
     try {
-      const { username, password, language } = req.body;
+      const { username, email, password, language } = req.body;
       
       // Check if username already exists
       const existingUser = await storage.getUserByUsername(username);
@@ -151,9 +153,18 @@ export const setupAuth = (app: Express) => {
         return res.status(400).json({ error: 'Username already exists' });
       }
       
+      // Check if email already exists
+      if (email) {
+        const existingEmail = await storage.getUserByEmail(email);
+        if (existingEmail) {
+          return res.status(400).json({ error: 'Email already exists' });
+        }
+      }
+      
       // Register new user
       const newUser = await storage.registerUser({
         username,
+        email,
         password, // Will be hashed in registerUser method
         language: language || 'no' // Default to Norwegian
       });
@@ -167,8 +178,10 @@ export const setupAuth = (app: Express) => {
         return res.status(201).json({
           id: newUser.id,
           username: newUser.username,
+          email: newUser.email,
           language: newUser.language,
-          trialStartDate: newUser.trialStartDate
+          trialStartDate: newUser.trialStartDate,
+          subscribed: newUser.subscribed
         });
       });
     } catch (error) {
