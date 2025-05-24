@@ -22,7 +22,7 @@ export default function Map() {
   const { data: radarReports } = useQuery<RadarReport[]>({
     queryKey: ['/api/radar-reports'],
   });
-
+   const firstLoad = useRef(true);
   // Initialize map when component mounts
   useEffect(() => {
     if (!mapContainerRef.current || !mapboxKey) return;
@@ -34,6 +34,8 @@ export default function Map() {
       const map = createMap('map', {
         style: 'mapbox://styles/mapbox/streets-v11',
         zoom: 14,
+
+        
       });
 
       map.on('load', () => {
