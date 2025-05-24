@@ -5,20 +5,20 @@ import { execSync } from 'child_process';
  * Verifies Node.js installation and version
  */
 
-export function checkNodeInstallation() {
+export async function checkNodeInstallation(): Promise<{ success: boolean; lowMemory: boolean }> {
   console.log('\n🟢 Checking Node.js installation...');
+  let lowMemory = false;
   
   try {
     const nodeVersion = process.version;
     const npmVersion = execSync('npm --version').toString().trim();
     
-    console.log(`✓ Node.js version: ${nodeVersion}`);
-    console.log(`✓ npm version: ${npmVersion}`);
-    
+    // Only show detailed info if there are issues
     const versionNumber = nodeVersion.slice(1).split('.').map(Number);
     if (versionNumber[0] < 16) {
-      console.warn('⚠️ Warning: This application works best with Node.js v16 or higher.');
-      return false;
+      console.warn('❌ This application requires Node.js v16 or higher.');
+      console.warn(`   Current version: ${nodeVersion}`);
+      return { success: false, lowMemory };
     }
     
     // Check system memory
@@ -27,26 +27,25 @@ export function checkNodeInstallation() {
       const memoryUsage = JSON.parse(memoryInfo);
       const availableMemoryMB = Math.round(memoryUsage.heapTotal / 1024 / 1024);
       
-      console.log(`✓ Available heap memory: ${availableMemoryMB} MB`);
-      
       if (availableMemoryMB < 200) {
-        console.warn('⚠️ Warning: Low available memory. The application may experience performance issues.');
+        console.log('Low memory!');
+        lowMemory = true;
       }
     } catch (error) {
-      console.warn('⚠️ Could not check system memory.');
+      // Silently continue if memory check fails
     }
     
-    // Check for TypeScript
+    // Verify TypeScript is available (silently)
     try {
-      const typescriptVersion = execSync('npx tsc --version').toString().trim();
-      console.log(`✓ TypeScript: ${typescriptVersion}`);
+      execSync('npx tsc --version', { stdio: 'ignore' });
     } catch (error) {
-      console.warn('⚠️ TypeScript is not installed or not in PATH.');
+      console.warn('❌ TypeScript is not installed or not in PATH.');
+      return { success: false, lowMemory };
     }
     
-    return true;
+    return { success: true, lowMemory };
   } catch (error: any) {
     console.error('❌ Error checking Node.js installation:', error.message);
-    return false;
+    return { success: false, lowMemory };
   }
 }

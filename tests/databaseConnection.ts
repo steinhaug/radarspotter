@@ -12,15 +12,11 @@ if (typeof globalThis.WebSocket === 'undefined') {
  */
 
 export async function checkDatabaseConnection() {
-  console.log('📊 Checking database connection...');
-  
   // 1. Check if credentials exist
   if (!process.env.DATABASE_URL) {
     console.error('❌ DATABASE_URL environment variable is not set.');
     return false;
   }
-  
-  console.log('✓ DATABASE_URL environment variable is set.');
   
   // 2. Validate credential format
   const databaseUrl = process.env.DATABASE_URL;
@@ -30,9 +26,6 @@ export async function checkDatabaseConnection() {
     const url = new URL(databaseUrl);
     const username = url.username;
     const password = url.password;
-    const hostname = url.hostname;
-    const port = url.port;
-    const database = url.pathname.substring(1); // Remove leading slash
     
     // Check if credentials are valid (at least 2 characters)
     if (username.length < 2) {
@@ -44,9 +37,6 @@ export async function checkDatabaseConnection() {
       console.error('❌ Database password is too short (less than 2 characters).');
       return false;
     }
-    
-    // Log connection details for reference
-    console.log(`✓ Attempting to connect to: ${hostname}:${port || '5432'} (Database: ${database})`);
     
   } catch (error) {
     console.error('❌ Invalid DATABASE_URL format. Expected format: postgres://username:password@host:port/database');
@@ -60,7 +50,6 @@ export async function checkDatabaseConnection() {
     const result = await pool.query('SELECT 1 as connection_test');
     
     if (result && result.rows && result.rows[0].connection_test === 1) {
-      console.log('✓ Successfully connected to the database.');
       return true;
     } else {
       console.error('❌ Could not verify database connection.');

@@ -12,8 +12,6 @@ if (typeof globalThis.WebSocket === 'undefined') {
  */
 
 export async function checkDatabasePrerequisites(dbConnectionSuccessful: boolean) {
-  console.log('\n🗃️ Checking database functionality...');
-  
   // Skip this test if database connection failed
   if (!dbConnectionSuccessful) {
     console.log('⚠️ Skipping database functionality check because database connection failed.');
@@ -31,10 +29,9 @@ export async function checkDatabasePrerequisites(dbConnectionSuccessful: boolean
     
     // Check for required tables
     const requiredTables = ['users', 'radar_reports', 'sessions', 'achievements', 'user_achievements'];
-    const existingTables: string[] = [];
     let allTablesExist = true;
     
-    // Check each table individually and report status
+    // Check each table individually but only report failures
     for (const tableName of requiredTables) {
       const result = await pool.query(`
         SELECT EXISTS (
@@ -44,33 +41,35 @@ export async function checkDatabasePrerequisites(dbConnectionSuccessful: boolean
         );
       `, [tableName]);
       
-      if (result && result.rows && result.rows[0].exists) {
-        existingTables.push(tableName);
-        
-        // Get table row count
-        const countResult = await pool.query(`SELECT COUNT(*) FROM ${tableName}`);
-        console.log(`✓ Table '${tableName}' exists with ${countResult.rows[0].count} rows.`);
-      } else {
+      if (!(result && result.rows && result.rows[0].exists)) {
         console.error(`❌ Required table '${tableName}' does not exist in the database.`);
         allTablesExist = false;
       }
     }
     
-    // Check database version
-    try {
-      const versionResult = await pool.query('SELECT version();');
-      console.log(`✓ Database version: ${versionResult.rows[0].version.split(',')[0]}`);
-    } catch (error) {
-      console.warn('⚠️ Could not check database version.');
-    }
-    
-    if (allTablesExist) {
-      console.log(`✓ All required database tables exist.`);
-    } else {
+    if (!allTablesExist) {
       console.warn(`⚠️ Some required tables are missing. The application may not function correctly.`);
+      return false;
     }
     
-    return allTablesExist;
+    // Check if test user exists, create if not
+    const testUserResult = await pool.query(`
+      SELECT * FROM users WHERE username = $1
+    `, ['test']);
+    
+    if (testUserResult.rowCount === 0) {
+      console.log('Creating test user (username: test, password: test)...');
+      
+      // Insert test user
+      await pool.query(`
+        INSERT INTO users (username, password, email, language, trial_start_date, subscribed) 
+        VALUES ($1, $2, $3, $4, NOW(), $5)
+      `, ['test', 'test', 'test@test.com', 'no', false]);
+      
+      console.log('✓ Test user created successfully.');
+    }
+    
+    return true;
   } catch (error: any) {
     console.error('❌ Error checking database functionality:', error.message);
     return false;
