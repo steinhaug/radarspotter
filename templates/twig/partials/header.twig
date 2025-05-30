@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {{ raw_head_begin|raw }}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page.title }}</title>
+    {% for header_include in header_includes %}
+        {% if header_include.style is defined %}
+            <link href="{{ header_include.style }}" rel="stylesheet">
+        {% endif %}
+        
+        {% if header_include.script is defined %}
+            <script src="{{ header_include.script }}" defer></script>
+        {% endif %}
+    {% endfor %}
+    {{ raw_head_end|raw }}
+</head>
+<body class="bg-white dark:bg-gray-900 transition-colors duration-200">
+{{ raw_body_begin|raw }}
+        <div class="bg-white h-full w-full px-5 pt-6 pb-20 overflow-y-auto">
+

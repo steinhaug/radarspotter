@@ -1,0 +1,23 @@
+
+        </div>
+        <div class="bg-white absolute bottom-0 w-full border-t border-gray-200 flex">
+        {% if navitems|length %}
+            {% for item in navitems %}
+
+            {% set btn_state = item.active ? 'text-indigo-500' : 'text-gray-500' %}
+
+            <a href="{{ item.url }}" class="flex flex-grow items-center justify-center p-2 {{ btn_state}} hover:text-indigo-500">
+                <div class="text-center">
+                    <span class="block h-8 text-3xl leading-8">
+                        <i class="mdi mdi-{{ item.icon }}"></i>
+                    </span>
+                    <span class="block text-xs leading-none">{{ item.title }}</span>
+                </div>
+            </a>
+            {% endfor %}
+        {% endif %}
+        </div>
+
+{{ raw_body_end|raw }}
+</body>
+</html>

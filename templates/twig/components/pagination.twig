@@ -1,0 +1,42 @@
+{# Usage: {% include 'components/pagination.html.twig' with {current_page: 2, total_pages: 10, base_url: '/products'} %} #}
+{% set current_page = current_page|default(1) %}
+{% set total_pages = total_pages|default(1) %}
+{% set show_pages = show_pages|default(5) %}
+
+<nav class="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 px-4 py-3 sm:px-6">
+    <div class="flex flex-1 justify-between sm:hidden">
+        {% if current_page > 1 %}
+            <a href="{{ base_url }}?page={{ current_page - 1 }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600">
+                Previous
+            </a>
+        {% endif %}
+        {% if current_page < total_pages %}
+            <a href="{{ base_url }}?page={{ current_page + 1 }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600">
+                Next
+            </a>
+        {% endif %}
+    </div>
+    
+    <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+        <div>
+            <p class="text-sm text-gray-700 dark:text-gray-300">
+                Page <span class="font-medium">{{ current_page }}</span> of <span class="font-medium">{{ total_pages }}</span>
+            </p>
+        </div>
+        <div>
+            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                {% for page in 1..total_pages %}
+                    {% if page == current_page %}
+                        <span class="relative inline-flex items-center px-4 py-2 border border-indigo-500 bg-indigo-50 text-sm font-medium text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400">
+                            {{ page }}
+                        </span>
+                    {% else %}
+                        <a href="{{ base_url }}?page={{ page }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700">
+                            {{ page }}
+                        </a>
+                    {% endif %}
+                {% endfor %}
+            </nav>
+        </div>
+    </div>
+</nav>

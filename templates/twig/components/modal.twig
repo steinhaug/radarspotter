@@ -1,0 +1,34 @@
+{# Usage: {% include 'components/modal.html.twig' with {id: 'my-modal', title: 'Modal Title'} %} #}
+{% set size = size|default('md') %}
+
+{% set size_classes = {
+    'sm': 'max-w-md',
+    'md': 'max-w-lg',
+    'lg': 'max-w-2xl',
+    'xl': 'max-w-4xl'
+} %}
+
+<div id="{{ id }}" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="{{ id }}-title" role="dialog">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" aria-hidden="true"></div>
+        
+        <div class="inline-block w-full {{ size_classes[size] }} p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-gray-800 shadow-xl rounded-lg">
+            <div class="flex items-center justify-between mb-4">
+                {% if title %}
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white" id="{{ id }}-title">{{ title }}</h3>
+                {% endif %}
+                <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" onclick="closeModal('{{ id }}')">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="text-gray-700 dark:text-gray-300">
+                {% block modal_content %}
+                    {{ content|raw }}
+                {% endblock %}
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,60 @@
+{
+  "components": {
+    "button.twig": {
+      "description": "Flexible button component with multiple styles and sizes",
+      "required": [],
+      "optional": {
+        "text": "Button text content",
+        "type": "Button style: 'primary', 'secondary', 'danger', 'outline' (default: 'primary')",
+        "size": "Button size: 'sm', 'md', 'lg' (default: 'md')",
+        "disabled": "Boolean: true/false (default: false)",
+        "class": "Additional CSS classes",
+        "attributes": "Raw HTML attributes"
+      },
+      "example": "twig('@components/button.twig', {'text': 'Click me', 'type': 'primary', 'size': 'md'})"
+    },
+    "card.twig": {
+      "description": "Card container with optional title and flexible content",
+      "required": [],
+      "optional": {
+        "title": "Card title text",
+        "content": "Card content (raw HTML)",
+        "padding": "Card padding: 'sm', 'md', 'lg' (default: 'md')",
+        "shadow": "Card shadow: 'sm', 'md', 'lg', 'xl' (default: 'md')",
+        "class": "Additional CSS classes"
+      },
+      "example": "twig('@components/card.twig', {'title': 'Hello World', 'content': '<p>Lorem ipsum</p>'})"
+    },
+    "modal.twig": {
+      "description": "Modal dialog with backdrop and close functionality",
+      "required": ["id"],
+      "optional": {
+        "title": "Modal title",
+        "content": "Modal content (raw HTML)",
+        "size": "Modal size: 'sm', 'md', 'lg', 'xl' (default: 'md')"
+      },
+      "example": "twig('@components/modal.twig', {'id': 'my-modal', 'title': 'Modal Title', 'content': '<p>Modal content</p>'})"
+    },
+    "alert.twig": {
+      "description": "Alert/notification component with different types",
+      "required": [],
+      "optional": {
+        "message": "Alert message text",
+        "type": "Alert type: 'success', 'error', 'warning', 'info' (default: 'info')",
+        "dismissible": "Boolean: true/false (default: false)",
+        "class": "Additional CSS classes"
+      },
+      "example": "twig('@components/alert.twig', {'message': 'Success!', 'type': 'success', 'dismissible': true})"
+    },
+    "pagination.twig": {
+      "description": "Pagination component for multi-page content",
+      "required": ["base_url"],
+      "optional": {
+        "current_page": "Current page number (default: 1)",
+        "total_pages": "Total number of pages (default: 1)",
+        "show_pages": "Number of pages to show (default: 5)"
+      },
+      "example": "twig('@components/pagination.twig', {'base_url': '/products', 'current_page': 2, 'total_pages': 10})"
+    }
+  }
+}

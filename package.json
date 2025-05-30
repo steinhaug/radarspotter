@@ -1,0 +1,19 @@
+{
+  "name": "radarspotter",
+  "version": "1.0.0",
+  "main": "postcss.config.js",
+  "scripts": {
+    "build": "npx @tailwindcss/cli -i ./tailwind/tailwind-combo.scss -o ./public_html/dist/css/tailwind.css",
+    "watch": "npx @tailwindcss/cli -i ./tailwind/tailwind-combo.scss -o ./public_html/dist/css/tailwind.css --watch",
+    "ai-agent-rebuild": "php dev-tools/scripts/generate-tailwind-imports.php",
+    "rebuild": "php dev-tools/scripts/generate-tailwind-imports.php"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Proprietary License v1.0",
+  "description": "",
+  "dependencies": {
+    "@tailwindcss/cli": "^4.1.7",
+    "tailwindcss": "^4.1.7"
+  }
+}

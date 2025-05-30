@@ -1,4 +1,10 @@
-*.zip
-backup-*.zip
-node_modules/
-.cache/
+/vendor/**/*
+/node_modules/**/*
+/credentials.php
+/composer.lock
+/package-lock.json
+/MyApp-PHP-main/**/*
+/logs/**/*
+/templates/cache/**/*
+/public_html/dist/css/tailwind.css
+/site/**/*
