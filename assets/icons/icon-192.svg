@@ -1,0 +1,70 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle with Norway blue -->
+  <circle cx="96" cy="96" r="96" fill="#003d82"/>
+  
+  <!-- Radar waves animation background -->
+  <g opacity="0.1">
+    <circle cx="96" cy="96" r="30" stroke="#ffffff" stroke-width="2" fill="none">
+      <animate attributeName="r" values="30;60;90" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.3;0.1;0" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="96" cy="96" r="30" stroke="#ffffff" stroke-width="2" fill="none">
+      <animate attributeName="r" values="30;60;90" dur="2s" begin="0.7s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.3;0.1;0" dur="2s" begin="0.7s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="96" cy="96" r="30" stroke="#ffffff" stroke-width="2" fill="none">
+      <animate attributeName="r" values="30;60;90" dur="2s" begin="1.4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.3;0.1;0" dur="2s" begin="1.4s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  
+  <!-- Main radar/speed camera icon -->
+  <g transform="translate(96,96)">
+    <!-- Camera body -->
+    <rect x="-20" y="-15" width="40" height="25" rx="4" fill="#ffffff"/>
+    
+    <!-- Camera lens -->
+    <circle cx="0" cy="0" r="12" fill="#003d82"/>
+    <circle cx="0" cy="0" r="8" fill="#ed2939"/>
+    <circle cx="0" cy="0" r="4" fill="#ffffff"/>
+    
+    <!-- Speed indicator lines -->
+    <g stroke="#ffffff" stroke-width="3" stroke-linecap="round">
+      <line x1="-35" y1="-8" x2="-28" y2="-8"/>
+      <line x1="-35" y1="0" x2="-25" y2="0"/>
+      <line x1="-35" y1="8" x2="-28" y2="8"/>
+    </g>
+    
+    <!-- Warning triangle -->
+    <g transform="translate(0,-35)">
+      <path d="M-8,0 L0,-12 L8,0 Z" fill="#ed2939"/>
+      <circle cx="0" cy="-4" r="1.5" fill="#ffffff"/>
+      <rect x="-1" y="-8" width="2" height="3" fill="#ffffff"/>
+    </g>
+    
+    <!-- Location pin for radar positioning -->
+    <g transform="translate(0,35)">
+      <path d="M0,-10 C-5,-10 -8,-7 -8,-2 C-8,3 0,10 0,10 C0,10 8,3 8,-2 C8,-7 5,-10 0,-10 Z" fill="#22c55e"/>
+      <circle cx="0" cy="-2" r="3" fill="#ffffff"/>
+    </g>
+  </g>
+  
+  <!-- Norwegian flag elements (subtle) -->
+  <g opacity="0.15">
+    <!-- Horizontal stripe -->
+    <rect x="0" y="88" width="192" height="16" fill="#ed2939"/>
+    <!-- Vertical stripe -->
+    <rect x="88" y="0" width="16" height="192" fill="#ed2939"/>
+  </g>
+  
+  <!-- App name text -->
+  <text x="96" y="165" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="14" font-weight="bold">
+    RadarVarsler
+  </text>
+  
+  <!-- Version indicator -->
+  <circle cx="165" cy="27" r="8" fill="#22c55e"/>
+  <text x="165" y="31" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="10" font-weight="bold">
+    1
+  </text>
+</svg>

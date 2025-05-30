@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RadarVarsler - Norsk PWA for Bilister</title>
+    <meta name="description" content="Norsk radar-varsling PWA med sanntids PIN-system og navigasjon">
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e40af">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="RadarVarsler">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="assets/icons/icon-192.svg">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.svg">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- MapBox -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
+    
+    <!-- Turf.js for geographical calculations -->
+    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+    
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'norway-blue': '#003d82',
+                        'norway-red': '#ed2939',
+                        'pin-green': '#22c55e',
+                        'pin-yellow': '#eab308',
+                        'pin-red': '#ef4444'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <!-- Loading Screen -->
+    <div id="loading" class="fixed inset-0 bg-norway-blue z-50 flex items-center justify-center">
+        <div class="text-center text-white">
+            <div class="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <h1 class="text-2xl font-bold mb-2">RadarVarsler</h1>
+            <p class="text-sm opacity-80">Laster applikasjon...</p>
+        </div>
+    </div>
+
+    <!-- Navigation Header -->
+    <header id="header" class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <img src="assets/icons/icon-192.svg" alt="RadarVarsler" class="w-8 h-8 mr-3">
+                    <h1 class="text-xl font-bold text-norway-blue dark:text-white">RadarVarsler</h1>
+                </div>
+                
+                <nav class="flex items-center space-x-4">
+                    <button id="toggle-theme" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <i data-feather="sun" class="w-5 h-5 hidden dark:block"></i>
+                        <i data-feather="moon" class="w-5 h-5 block dark:hidden"></i>
+                    </button>
+                    
+                    <button id="profile-btn" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <i data-feather="user" class="w-5 h-5"></i>
+                        <span id="username" class="text-sm font-medium"></span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1">
+        <!-- Login Screen -->
+        <div id="login-screen" class="min-h-screen flex items-center justify-center px-4">
+            <div class="max-w-md w-full space-y-8">
+                <div class="text-center">
+                    <img src="assets/icons/icon-192.svg" alt="RadarVarsler" class="w-24 h-24 mx-auto mb-4">
+                    <h2 class="text-3xl font-bold text-norway-blue dark:text-white">Velkommen til RadarVarsler</h2>
+                    <p class="mt-2 text-gray-600 dark:text-gray-400">Logg inn for å få tilgang til radarvarsler og navigasjon</p>
+                </div>
+                
+                <form id="login-form" class="space-y-6">
+                    <div>
+                        <label for="username" class="block text-sm font-medium mb-2">Brukernavn</label>
+                        <input type="text" id="login-username" name="username" required 
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-norway-blue focus:border-transparent bg-white dark:bg-gray-800">
+                    </div>
+                    
+                    <div>
+                        <label for="password" class="block text-sm font-medium mb-2">Passord</label>
+                        <input type="password" id="login-password" name="password" required 
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-norway-blue focus:border-transparent bg-white dark:bg-gray-800">
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-norway-blue text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-norway-blue focus:ring-offset-2 transition-colors">
+                        Logg inn
+                    </button>
+                </form>
+                
+                <div class="text-center">
+                    <button id="register-btn" class="text-norway-blue hover:underline">Opprett ny konto</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Map Screen -->
+        <div id="map-screen" class="hidden">
+            <!-- Map Container -->
+            <div id="map" class="h-screen w-full relative">
+                <!-- Map Controls -->
+                <div class="absolute top-4 left-4 z-30 space-y-2">
+                    <button id="center-location" class="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <i data-feather="crosshair" class="w-5 h-5"></i>
+                    </button>
+                    
+                    <button id="start-navigation" class="bg-norway-blue text-white p-3 rounded-lg shadow-lg hover:bg-blue-700">
+                        <i data-feather="navigation" class="w-5 h-5"></i>
+                    </button>
+                    
+                    <button id="add-pin" class="bg-norway-red text-white p-3 rounded-lg shadow-lg hover:bg-red-700">
+                        <i data-feather="map-pin" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Speed and Info Display -->
+                <div id="speed-display" class="absolute top-4 right-4 z-30 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg">
+                    <div class="text-center">
+                        <div id="current-speed" class="text-2xl font-bold">0</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">km/t</div>
+                    </div>
+                </div>
+
+                <!-- Bottom Panel -->
+                <div id="bottom-panel" class="absolute bottom-0 left-0 right-0 z-30 bg-white dark:bg-gray-800 shadow-lg transform translate-y-full transition-transform duration-300">
+                    <div class="p-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 id="panel-title" class="text-lg font-semibold">Navigasjon</h3>
+                            <button id="close-panel" class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                                <i data-feather="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        <div id="panel-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Screen -->
+        <div id="analytics-screen" class="hidden min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="mb-8">
+                    <h1 class="text-3xl font-bold text-norway-blue dark:text-white mb-2">Min Statistikk</h1>
+                    <p class="text-gray-600 dark:text-gray-400">Oversikt over din aktivitet og tillitsscore</p>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-pin-green/10 rounded-lg">
+                                <i data-feather="map-pin" class="w-6 h-6 text-pin-green"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Registrerte PINs</p>
+                                <p id="pins-created" class="text-2xl font-bold">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                                <i data-feather="thumbs-up" class="w-6 h-6 text-blue-600"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Bekreftelser</p>
+                                <p id="verifications-given" class="text-2xl font-bold">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+                                <i data-feather="star" class="w-6 h-6 text-yellow-600"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Tillitsscore</p>
+                                <p id="trust-score" class="text-2xl font-bold">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-norway-blue/10 rounded-lg">
+                                <i data-feather="road" class="w-6 h-6 text-norway-blue"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Km kjørt</p>
+                                <p id="distance-driven" class="text-2xl font-bold">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Premium Section -->
+                <div class="bg-gradient-to-r from-norway-blue to-blue-600 p-6 rounded-lg text-white mb-8">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">RadarVarsler Premium</h3>
+                            <p class="opacity-90">Få tilgang til avanserte funksjoner og ubegrenset varsling</p>
+                        </div>
+                        <button id="upgrade-premium" class="bg-white text-norway-blue px-6 py-2 rounded-lg font-semibold hover:bg-gray-100">
+                            Oppgrader
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold mb-4">Nylig aktivitet</h3>
+                    <div id="recent-activity" class="space-y-3">
+                        <!-- Activity items will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav id="bottom-nav" class="hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-40">
+        <div class="flex">
+            <button id="nav-map" class="flex-1 flex flex-col items-center py-2 px-1 text-norway-blue bg-blue-50 dark:bg-blue-900/30">
+                <i data-feather="map" class="w-5 h-5 mb-1"></i>
+                <span class="text-xs font-medium">Kart</span>
+            </button>
+            
+            <button id="nav-analytics" class="flex-1 flex flex-col items-center py-2 px-1 text-gray-500 hover:text-norway-blue">
+                <i data-feather="bar-chart-2" class="w-5 h-5 mb-1"></i>
+                <span class="text-xs font-medium">Statistikk</span>
+            </button>
+            
+            <button id="nav-settings" class="flex-1 flex flex-col items-center py-2 px-1 text-gray-500 hover:text-norway-blue">
+                <i data-feather="settings" class="w-5 h-5 mb-1"></i>
+                <span class="text-xs font-medium">Innstillinger</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Notification Container -->
+    <div id="notifications" class="fixed top-20 right-4 z-50 space-y-2"></div>
+
+    <!-- Modals -->
+    <!-- PIN Details Modal -->
+    <div id="pin-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full max-h-screen overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold">PIN Detaljer</h3>
+                        <button id="close-pin-modal" class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                            <i data-feather="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="pin-details"></div>
+                    
+                    <!-- Voting Section -->
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="font-medium">Bekreft denne kontrollen:</span>
+                            <div class="flex space-x-2">
+                                <button id="vote-up" class="flex items-center space-x-1 px-3 py-2 bg-pin-green text-white rounded hover:bg-green-600">
+                                    <i data-feather="thumbs-up" class="w-4 h-4"></i>
+                                    <span id="upvotes">0</span>
+                                </button>
+                                <button id="vote-down" class="flex items-center space-x-1 px-3 py-2 bg-pin-red text-white rounded hover:bg-red-600">
+                                    <i data-feather="thumbs-down" class="w-4 h-4"></i>
+                                    <span id="downvotes">0</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Chat Section -->
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                        <h4 class="font-medium mb-3">Kommentarer</h4>
+                        <div id="chat-messages" class="space-y-2 mb-3 max-h-48 overflow-y-auto">
+                            <!-- Chat messages will be populated here -->
+                        </div>
+                        <div class="flex space-x-2">
+                            <input type="text" id="chat-input" placeholder="Skriv en kommentar..." 
+                                   class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-norway-blue focus:border-transparent bg-white dark:bg-gray-700">
+                            <button id="send-chat" class="px-4 py-2 bg-norway-blue text-white rounded-lg hover:bg-blue-700">
+                                <i data-feather="send" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="script.js"></script>
+    <script>
+        // Initialize Feather icons
+        feather.replace();
+        
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch((registrationError) => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

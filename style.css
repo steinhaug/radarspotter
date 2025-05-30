@@ -1,0 +1,427 @@
+/* RadarVarsler Custom Styles */
+
+:root {
+  /* Norway Theme Colors */
+  --norway-blue: #003d82;
+  --norway-red: #ed2939;
+  --norway-white: #ffffff;
+  
+  /* PIN Trust Colors */
+  --pin-green: #22c55e;
+  --pin-yellow: #eab308;
+  --pin-red: #ef4444;
+  
+  /* Background and Text */
+  --background: 249 250 251; /* #f9fafb */
+  --foreground: 17 24 39; /* #111827 */
+  --card: 255 255 255; /* #ffffff */
+  --card-foreground: 17 24 39; /* #111827 */
+  
+  /* Border and Input */
+  --border: 229 231 235; /* #e5e7eb */
+  --input: 229 231 235; /* #e5e7eb */
+  --ring: 59 130 246; /* #3b82f6 */
+  
+  /* Primary and Secondary */
+  --primary: 0 61 130; /* #003d82 */
+  --primary-foreground: 255 255 255; /* #ffffff */
+  --secondary: 243 244 246; /* #f3f4f6 */
+  --secondary-foreground: 17 24 39; /* #111827 */
+}
+
+.dark {
+  --background: 17 24 39; /* #111827 */
+  --foreground: 249 250 251; /* #f9fafb */
+  --card: 31 41 55; /* #1f2937 */
+  --card-foreground: 249 250 251; /* #f9fafb */
+  --border: 55 65 81; /* #374151 */
+  --input: 55 65 81; /* #374151 */
+  --ring: 59 130 246; /* #3b82f6 */
+  --secondary: 55 65 81; /* #374151 */
+  --secondary-foreground: 249 250 251; /* #f9fafb */
+}
+
+/* Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* MapBox Overrides */
+.mapboxgl-popup {
+  max-width: 300px;
+}
+
+.mapboxgl-popup-content {
+  background: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border: 1px solid hsl(var(--border));
+}
+
+.mapboxgl-popup-close-button {
+  color: hsl(var(--foreground));
+  font-size: 18px;
+  padding: 8px;
+}
+
+.mapboxgl-popup-close-button:hover {
+  background-color: hsl(var(--secondary));
+}
+
+.mapboxgl-ctrl-group {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.mapboxgl-ctrl button {
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+}
+
+.mapboxgl-ctrl button:hover {
+  background: hsl(var(--secondary));
+}
+
+/* PIN Markers */
+.pin-marker {
+  width: 30px;
+  height: 30px;
+  border-radius: 50% 50% 50% 0;
+  border: 3px solid white;
+  transform: rotate(-45deg);
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.pin-marker:hover {
+  transform: rotate(-45deg) scale(1.1);
+}
+
+.pin-marker.high-trust {
+  background-color: var(--pin-green);
+}
+
+.pin-marker.medium-trust {
+  background-color: var(--pin-yellow);
+}
+
+.pin-marker.low-trust {
+  background-color: var(--pin-red);
+}
+
+.pin-marker::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+/* Navigation Route Line */
+.route-line {
+  line-color: var(--norway-blue);
+  line-width: 6;
+  line-opacity: 0.8;
+}
+
+/* Speed Display Animation */
+#current-speed {
+  transition: color 0.3s ease;
+}
+
+.speed-warning {
+  color: var(--pin-red) !important;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Notification Styles */
+.notification {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateX(100%);
+  animation: slideIn 0.3s ease forwards;
+  max-width: 300px;
+}
+
+.notification.success {
+  border-left: 4px solid var(--pin-green);
+}
+
+.notification.warning {
+  border-left: 4px solid var(--pin-yellow);
+}
+
+.notification.error {
+  border-left: 4px solid var(--pin-red);
+}
+
+.notification.info {
+  border-left: 4px solid var(--norway-blue);
+}
+
+@keyframes slideIn {
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOut {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* Bottom Panel Animations */
+#bottom-panel.show {
+  transform: translateY(0) !important;
+}
+
+/* Chat Messages */
+.chat-message {
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  background: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+}
+
+.chat-message.own {
+  background: var(--norway-blue);
+  color: white;
+  margin-left: 20%;
+}
+
+.chat-message.other {
+  margin-right: 20%;
+}
+
+.chat-message .username {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 2px;
+  opacity: 0.8;
+}
+
+.chat-message .timestamp {
+  font-size: 11px;
+  opacity: 0.6;
+  margin-top: 2px;
+}
+
+/* Loading States */
+.loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  .mapboxgl-ctrl-group {
+    margin: 8px;
+  }
+  
+  #speed-display {
+    top: 16px;
+    right: 16px;
+    padding: 12px;
+  }
+  
+  #bottom-panel {
+    max-height: 70vh;
+    border-radius: 16px 16px 0 0;
+  }
+  
+  .notification {
+    margin-right: 16px;
+    max-width: calc(100vw - 32px);
+  }
+}
+
+/* High DPI / Retina Display Optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .pin-marker {
+    border-width: 2px;
+  }
+  
+  .mapboxgl-popup-content {
+    border-width: 0.5px;
+  }
+}
+
+/* Dark Mode Map Styles */
+.dark .mapboxgl-map {
+  background-color: #1a202c !important;
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus Styles for Keyboard Navigation */
+button:focus,
+input:focus,
+select:focus {
+  outline: 2px solid var(--norway-blue);
+  outline-offset: 2px;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .pin-marker {
+    border-width: 4px;
+  }
+  
+  .notification {
+    border-width: 2px;
+  }
+}
+
+/* Print Styles */
+@media print {
+  #map,
+  #bottom-nav,
+  .notification {
+    display: none !important;
+  }
+  
+  #analytics-screen {
+    display: block !important;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--secondary));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--foreground) / 0.5);
+}
+
+/* Custom Button Styles */
+.btn-primary {
+  background-color: var(--norway-blue);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: #002a5c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 61, 130, 0.3);
+}
+
+.btn-secondary {
+  background-color: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  border: 1px solid hsl(var(--border));
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background-color: hsl(var(--border));
+}
+
+/* Toast Notifications */
+.toast {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  animation: toastSlideUp 0.3s ease;
+}
+
+@keyframes toastSlideUp {
+  from {
+    transform: translateX(-50%) translateY(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}

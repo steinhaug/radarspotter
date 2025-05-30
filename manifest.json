@@ -1,0 +1,65 @@
+{
+  "name": "RadarVarsler - Norsk PWA for Bilister",
+  "short_name": "RadarVarsler",
+  "description": "Norsk radar-varsling PWA med sanntids PIN-system og navigasjon",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#003d82",
+  "theme_color": "#003d82",
+  "orientation": "portrait-primary",
+  "categories": ["navigation", "travel", "utilities"],
+  "lang": "no",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://pixabay.com/get/gb669d20a27b4649e858cd9d5ea274d78ee08b74baac114f4d13ce9dc9be02e1b1e8119dd78421eb3eca0aa07557c0ddbed48919cc3bb7e04db0538e5056a8e1f_1280.jpg",
+      "sizes": "1280x853",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "Mobile navigation interface"
+    },
+    {
+      "src": "https://pixabay.com/get/g0819e35ca318636a396fb531763b23bc74683cbc9f1ffb8b649612f787ce3a535add0ec8fd68040b1928eb4c0e1acfbff1cd9e8fc9ce5974c604be2814a24e28_1280.jpg",
+      "sizes": "1280x853",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Map interface with radar pins"
+    }
+  ],
+  "features": [
+    "offline",
+    "background-sync",
+    "geolocation",
+    "push-notifications"
+  ],
+  "shortcuts": [
+    {
+      "name": "Start navigasjon",
+      "short_name": "Navigasjon",
+      "description": "Start GPS navigasjon med radarvarsling",
+      "url": "/?action=navigate",
+      "icons": [{ "src": "assets/icons/icon-192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Registrer radar",
+      "short_name": "Ny PIN",
+      "description": "Registrer ny radarkontroll",
+      "url": "/?action=add-pin",
+      "icons": [{ "src": "assets/icons/icon-192.svg", "sizes": "192x192" }]
+    }
+  ]
+}
