@@ -1,29 +1,68 @@
-# MySQLi2 Bruksanvisning for AI
+# MySQLi2 Bruksanvisning for AI - v3
 
 ## Grunnleggende syntaks
 
-### INSERT (bruk alltid prepared_insert)
+### INSERT (bruk prepared_insert)
 ```php
 $sql = [
     'INSERT INTO `table_name` (`col1`, `col2`, `col3`) VALUES (?,?,?)',
     'iss',  // i=integer, s=string, d=double
     [$var1, $var2, $var3]
 ];
-$insertID = $mysqli->prepared_insert($sql);
+$lastInsertId = $mysqli->prepared_insert($sql);
+// Returnerer: last_insert_id for INSERT, affected_rows for UPDATE
 ```
 
-### SELECT (bruk prepared_query)
+### SELECT - Flere resultater (bruk prepared_query)
 ```php
 $sql = [
-    'SELECT * FROM `table_name` WHERE `id`=? AND `status`=?',
-    'is',
-    [$id, 'active']
+    'SELECT * FROM `table_name` WHERE `status`=?',
+    's',
+    ['active']
 ];
 $results = $mysqli->prepared_query($sql);
 // Returnerer: array av associative arrays
+// Tom tabell returnerer: []
+
+// Hent første rad hvis den finnes:
+$firstRow = $results[0] ?? null;
 ```
 
-### UPDATE (bruk prepared_insert - ja, det er riktig!)
+### SELECT - Ett resultat (bruk prepared_query1)
+```php
+// Hent bare verdien (f.eks. COUNT)
+$count = $mysqli->prepared_query1(
+    "SELECT COUNT(*) FROM `table_name` WHERE `status`=?", 
+    's', 
+    ['active'], 
+    0  // returnerer første kolonne direkte som verdi
+);
+
+// Hent hele raden som array
+$user = $mysqli->prepared_query1(
+    "SELECT * FROM `users` WHERE `id`=?", 
+    'i', 
+    [$id], 
+    'default'  // returnerer første rad som associative array
+);
+
+// Hent rad med NULL-håndtering
+$user = $mysqli->prepared_query1(
+    "SELECT * FROM `users` WHERE `id`=?", 
+    'i', 
+    [$id], 
+    true  // returnerer NULL hvis ingen treff, ellers første rad som array
+);
+
+// Praktisk NULL-sjekk pattern
+if (($user = $mysqli->prepared_query1($sql, 'i', [$id], true)) === null) {
+    // Bruker finnes ikke
+    throw new Exception('User not found');
+}
+// $user inneholder nå brukerdata
+```
+
+### UPDATE (bruk prepared_insert)
 ```php
 $sql = [
     'UPDATE `table_name` SET `name`=?, `email`=? WHERE `id`=?',
@@ -31,6 +70,7 @@ $sql = [
     [$name, $email, $id]
 ];
 $affectedRows = $mysqli->prepared_insert($sql);
+// Returnerer: antall påvirkede rader
 ```
 
 ### DELETE (bruk prepared_query)
@@ -40,16 +80,49 @@ $sql = [
     'i',
     [$id]
 ];
-$affectedRows = $mysqli->prepared_query($sql);
+$deletedRows = $mysqli->prepared_query($sql);
+// Returnerer: antall slettede rader
+```
+
+## Feilhåndtering
+
+```php
+// Med try/catch
+try {
+    $sql = ['INSERT INTO `users` (`name`) VALUES (?)', 's', [$name]];
+    $userId = $mysqli->prepared_insert($sql);
+    if (!$userId) {
+        throw new Exception('Insert feilet');
+    }
+} catch (Exception $e) {
+    // Håndter feil
+    error_log($e->getMessage());
+}
+
+// Eller enkel sjekk
+$results = $mysqli->prepared_query($sql);
+if (empty($results)) {
+    // Ingen resultater funnet
+}
 ```
 
 ## Type-definering
 - `i` = integer
-- `s` = string
+- `s` = string  
 - `d` = double/decimal
+
+## Returverdier oppsummering
+- `prepared_insert()`: Returnerer last_insert_id (INSERT) eller affected_rows (UPDATE)
+- `prepared_query()`: Returnerer array av associative arrays ([] hvis tomt)
+- `prepared_query1()`: 
+  - Med `0`: Returnerer første kolonne som verdi
+  - Med `'default'`: Returnerer første rad som array
+  - Med `true`: Returnerer NULL hvis ingen treff, ellers første rad som array
+- `prepared_delete()`: Returnerer antall slettede rader
 
 ## Viktige regler
 1. ALLTID bruk prepared statements med array-syntaksen
 2. ALLTID wrap tabellnavn i backticks: `table_name`
 3. ALDRI konkatenér variabler direkte i SQL
 4. prepared_insert() brukes for både INSERT og UPDATE
+5. Sjekk alltid returverdier for feilhåndtering
