@@ -280,40 +280,34 @@ class ChatManager {
  * Analytics Functions
  */
 class Analytics {
-    private $db;
-    
-    public function __construct() {
-        $this->db = Database::getInstance();
-    }
     
     public function logEvent($userId, $eventType, $data = null) {
-        $stmt = $this->db->prepare("
-            INSERT INTO analytics (user_id, event_type, event_data, created_at) 
-            VALUES (?, ?, ?, NOW())
-        ");
+        global $mysqli;
         
-        return $stmt->execute([
-            $userId,
-            $eventType,
-            $data ? json_encode($data) : null
-        ]);
+        $sql = [
+            'INSERT INTO `analytics` (`user_id`, `event_type`, `event_data`, `created_at`) 
+             VALUES (?, ?, ?, NOW())',
+            'iss',
+            [$userId, $eventType, $data ? json_encode($data) : null]
+        ];
+        
+        return $mysqli->prepared_insert($sql);
     }
     
     public function getUserAnalytics($userId) {
+        global $mysqli;
+        
         $userManager = new UserManager();
         $stats = $userManager->getUserStats($userId);
         
         // Get recent activity
-        $stmt = $this->db->prepare("
-            SELECT event_type, event_data, created_at
-            FROM analytics 
-            WHERE user_id = ? 
-            ORDER BY created_at DESC 
+        $recentActivity = $mysqli->prepared_query("
+            SELECT `event_type`, `event_data`, `created_at`
+            FROM `analytics` 
+            WHERE `user_id` = ? 
+            ORDER BY `created_at` DESC 
             LIMIT 10
-        ");
-        
-        $stmt->execute([$userId]);
-        $recentActivity = $stmt->fetchAll();
+        ", 'i', [$userId]);
         
         // Format activity descriptions
         foreach ($recentActivity as &$activity) {
@@ -351,45 +345,44 @@ class Analytics {
  * Warning System
  */
 class WarningSystem {
-    private $db;
-    
-    public function __construct() {
-        $this->db = Database::getInstance();
-    }
     
     public function logWarning($userId, $pinId, $algorithm, $distance) {
-        $stmt = $this->db->prepare("
-            INSERT INTO warnings_sent (user_id, pin_id, algorithm_used, distance_km, sent_at) 
-            VALUES (?, ?, ?, ?, NOW())
-        ");
+        global $mysqli;
         
-        return $stmt->execute([$userId, $pinId, $algorithm, $distance]);
+        $sql = [
+            'INSERT INTO `warnings_sent` (`user_id`, `pin_id`, `algorithm_used`, `distance_km`, `sent_at`) 
+             VALUES (?, ?, ?, ?, NOW())',
+            'iisd',
+            [$userId, $pinId, $algorithm, $distance]
+        ];
+        
+        return $mysqli->prepared_insert($sql);
     }
     
     public function hasBeenWarnedToday($userId, $pinId) {
-        $stmt = $this->db->prepare("
-            SELECT id FROM warnings_sent 
-            WHERE user_id = ? AND pin_id = ? 
-            AND sent_at >= CURRENT_DATE
-        ");
+        global $mysqli;
         
-        $stmt->execute([$userId, $pinId]);
-        return $stmt->fetch() !== false;
+        $warning = $mysqli->prepared_query1("
+            SELECT `id` FROM `warnings_sent` 
+            WHERE `user_id` = ? AND `pin_id` = ? 
+            AND `sent_at` >= CURDATE()
+        ", 'ii', [$userId, $pinId], true);
+        
+        return $warning !== null;
     }
     
     public function getWarningStats() {
-        $stmt = $this->db->prepare("
-            SELECT 
-                algorithm_used,
-                COUNT(*) as warning_count,
-                AVG(distance_km) as avg_distance
-            FROM warnings_sent 
-            WHERE sent_at >= CURRENT_DATE - INTERVAL '30 days'
-            GROUP BY algorithm_used
-        ");
+        global $mysqli;
         
-        $stmt->execute();
-        return $stmt->fetchAll();
+        return $mysqli->prepared_query("
+            SELECT 
+                `algorithm_used`,
+                COUNT(*) as warning_count,
+                AVG(`distance_km`) as avg_distance
+            FROM `warnings_sent` 
+            WHERE `sent_at` >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+            GROUP BY `algorithm_used`
+        ", '', []);
     }
 }
 ?>
