@@ -4,8 +4,9 @@
  * Norwegian radar warning app backend
  */
 
-require_once 'config.php';
-require_once 'database.php';
+require_once '../vendor/autoload.php';
+require_once '../appdata/config.php';
+require_once '../appdata/database.php';
 
 // CORS headers for PWA
 header('Access-Control-Allow-Origin: *');
@@ -32,11 +33,11 @@ switch ($path) {
         break;
         
     case '/api.php':
-        include 'api.php';
+        include '../appdata/api.php';
         break;
         
     case '/websocket.php':
-        include 'websocket.php';
+        include '../appdata/websocket.php';
         break;
         
     default:
