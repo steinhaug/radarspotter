@@ -18,7 +18,7 @@
     <link rel="apple-touch-icon" href="assets/icons/icon-192.svg">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="dist/css/style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- MapBox -->
@@ -317,7 +317,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="script.js"></script>
+    <script src="dist/js/script.js"></script>
     <script>
         // Initialize Feather icons
         feather.replace();
@@ -325,7 +325,7 @@
         // Register service worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
+                navigator.serviceWorker.register('/dist/js/sw.js')
                     .then((registration) => {
                         console.log('SW registered: ', registration);
                     })
