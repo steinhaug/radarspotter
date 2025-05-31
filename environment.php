@@ -1,9 +1,10 @@
 <?php
-
-require_once __DIR__ . '/credentials.php';
-require_once __DIR__ . '/vendor/autoload.php';
-
+define( 'ABSPATH', __DIR__ . '/' );
 define( 'APPDATA', __DIR__ . '/appdata/' );
+define( 'LOGPATH', __DIR__ . '/logs/' );
+
+require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/credentials.php';
 
 // Session configuration
 ini_set('session.cookie_httponly', 1);
@@ -17,6 +18,9 @@ ini_set('display_errors', 1);
 // Timezone
 date_default_timezone_set('UTC');
 
+if(!function_exists('sqlError__alertAndStop')){ function sqlError__alertAndStop($sql_error, $sql_query, $reference = '', $UserID = 0, $trace = null){
+    return time();
+} }
 
 /* Render a TWIG template
 $twig_template = '/components/card.html';
