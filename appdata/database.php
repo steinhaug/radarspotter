@@ -20,24 +20,19 @@ class Database {
     
     private function connect() {
         try {
-            $host = $_ENV['PGHOST'] ?? 'localhost';
-            $port = $_ENV['PGPORT'] ?? '5432';
-            $dbname = $_ENV['PGDATABASE'] ?? 'radarvarsler';
-            $username = $_ENV['PGUSER'] ?? 'postgres';
-            $password = $_ENV['PGPASSWORD'] ?? '';
+            $this->connection = Mysqli2::getInstance(
+                DB_HOST,
+                3306,
+                DB_USER,
+                DB_PASS,
+                DB_NAME
+            );
             
-            $dsn = "pgsql:host=$host;port=$port;dbname=$dbname";
+            // Set timezone and charset
+            $this->connection->query("SET time_zone = '+01:00'");
+            $this->connection->query("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
             
-            $this->connection = new PDO($dsn, $username, $password, [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false,
-            ]);
-            
-            // Set timezone
-            $this->connection->exec("SET timezone = 'Europe/Oslo'");
-            
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
             error_log("Database connection failed: " . $e->getMessage());
             throw new Exception("Database connection failed");
         }
@@ -63,14 +58,17 @@ class UserManager {
     }
     
     public function authenticate($username, $password) {
-        $stmt = $this->db->prepare("
-            SELECT id, username, email, trust_score, premium_until, created_at 
-            FROM users 
-            WHERE username = ? AND password_hash = ?
-        ");
+        $sql = "SELECT id, username, email, trust_score, premium_until, created_at 
+                FROM users 
+                WHERE username = ? AND password_hash = ?";
         
-        $stmt->execute([$username, hash('sha256', $password . SALT)]);
-        return $stmt->fetch();
+        $stmt = $this->db->prepare($sql);
+        $passwordHash = hash('sha256', $password . ($salt ?? ''));
+        $stmt->bind_param('ss', $username, $passwordHash);
+        $stmt->execute();
+        
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
     }
     
     public function register($username, $password, $email = null) {
