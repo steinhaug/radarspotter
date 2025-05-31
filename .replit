@@ -50,5 +50,5 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd server && php -S 0.0.0.0:5000 index.php"
+args = "cd public_html && php -S 0.0.0.0:5000 index.php"
 waitForPort = 5000

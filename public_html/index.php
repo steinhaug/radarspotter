@@ -1,106 +1,127 @@
-
 <?php
-require_once '../environment.php'; // Includes credentials and vendor autoloader
-
-// Make sure session is enabled.
-session_start();
-
-
-// - - - - - - - - - - - - - - - - 
-// Lets set-up the variables
-//
-// $page is used as internal pointer for what we are doing
-$page = $_GET['page'] ?? 'home';
-
-// Quick boolean variable for authenticated state, but we need to add the authentication layer first.
-$_logged_in = false; /* NOT IMPLEMENTED */
-
-
-
-
-
-/** CONFIGURABLE ARRAY:
- *  App Footer-navigation links.
- *  Add- edit- or remove- lines to change navigation items. 
- *  Icon names are official "Material Design Icons", reference for user: "https://pictogrammers.com/library/mdi/"
- *  
- * Array syntax: title(string), url(string), icon(string) & active(boolean)
+/**
+ * RadarVarsler PWA - Main Server Entry Point
+ * Norwegian radar warning app backend
  */
-$footer_nav_items = [
-    ['title'=>'home', 'url'=>'/?page=home', 'icon'=>'newspaper-variant-outline', 'active'=>false],
-    ['title'=>'konto', 'url'=>'/?page=konto', 'icon'=>'apps', 'active'=>false],
-    ['title'=>'profil', 'url'=>'/?page=profil', 'icon'=>'star-outline', 'active'=>false]
-];
 
+require_once 'config.php';
+require_once 'database.php';
 
-// - - - - - - - - - - - - - - - - 
-// ::RENDERING HEADER AND TOP OF PAGE
-// 
-echo twig('@partials/header.twig', [
-    'page_title' => 'The page title',
-    'header_includes' => [
-        ['style' => './dist/css/tailwind.css'], 
-        ['style' => 'https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/1.6.0/tailwind.min.css'],
-        ['style' => 'https://cdnjs.cloudflare.com/ajax/libs/MaterialDesign-Webfont/5.3.45/css/materialdesignicons.min.css'],
-        ['script' => './dist/js/main.js']
-    ],
-    'raw_head_begin' => '',
-    'raw_head_end' => '',
-    'raw_body_begin' => '',
-]);
+// CORS headers for PWA
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-
-
-// - - - - - - - - - - - - - - - - 
-// ::MAIN PART OF PAGE - START
-//  - raw html - html - html raw -
-// 
-
-
-
-
-
-
-
-if($page == 'home'){
-    // Public page - no auth required
-    require ABSPATH . '/appdata/Views/home.php';
-    
-} elseif($page == 'login'){
-    // Login and authentication section 
-    require ABSPATH . '/appdata/Views/authentication-page.php';
-
-} elseif($page == 'konto'){
-    // Auth required
-    if(!$_logged_in) { header('Location: ?page=login'); exit; }
-    require ABSPATH . '/appdata/Views/konto.php';
-    
-} elseif($page == 'profil'){
-    // Auth required  
-    if(!$_logged_in) { header('Location: ?page=login'); exit; }
-    require ABSPATH . '/appdata/Views/profil.php';
-    
-} else {
-    // Unknown page handler
-    http_response_code(404);
-    require ABSPATH . '/appdata/Views/404.php';
+// Handle preflight requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
 }
 
+// Basic routing
+$requestUri = $_SERVER['REQUEST_URI'];
+$path = parse_url($requestUri, PHP_URL_PATH);
 
+// Remove /server prefix if present
+$path = preg_replace('#^/server#', '', $path);
 
+switch ($path) {
+    case '/':
+    case '/index.php':
+        serveApp();
+        break;
+        
+    case '/api.php':
+        include 'api.php';
+        break;
+        
+    case '/websocket.php':
+        include 'websocket.php';
+        break;
+        
+    default:
+        // Serve static files or 404
+        if (file_exists('..' . $path)) {
+            serveStaticFile('..' . $path);
+        } else {
+            http_response_code(404);
+            echo json_encode(['error' => 'Not found']);
+        }
+        break;
+}
 
-// 
-//  - raw html - html - html raw -
-// ::MAIN PART OF PAGE - STOP
-// - - - - - - - - - - - - - - - - 
+function serveApp() {
+    // For PWA, always serve the main app
+    $indexPath = '../index.html';
+    if (file_exists($indexPath)) {
+        header('Content-Type: text/html; charset=utf-8');
+        readfile($indexPath);
+    } else {
+        http_response_code(500);
+        echo json_encode(['error' => 'App not found']);
+    }
+}
 
+function serveStaticFile($filePath) {
+    $mimeTypes = [
+        'css' => 'text/css',
+        'js' => 'application/javascript',
+        'json' => 'application/json',
+        'png' => 'image/png',
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'gif' => 'image/gif',
+        'svg' => 'image/svg+xml',
+        'ico' => 'image/x-icon',
+        'woff' => 'font/woff',
+        'woff2' => 'font/woff2',
+        'ttf' => 'font/ttf',
+        'eot' => 'application/vnd.ms-fontobject'
+    ];
+    
+    $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+    $mimeType = $mimeTypes[$ext] ?? 'application/octet-stream';
+    
+    header("Content-Type: $mimeType");
+    
+    // Cache headers for static assets
+    if (in_array($ext, ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'woff', 'woff2', 'ttf'])) {
+        header('Cache-Control: public, max-age=31536000'); // 1 year
+        header('Expires: ' . gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT');
+    }
+    
+    readfile($filePath);
+}
 
+// Log access for analytics
+function logAccess() {
+    $logData = [
+        'timestamp' => date('Y-m-d H:i:s'),
+        'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+        'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+        'path' => $_SERVER['REQUEST_URI'] ?? 'unknown',
+        'method' => $_SERVER['REQUEST_METHOD'] ?? 'unknown'
+    ];
+    
+    // Log to database or file
+    try {
+        $db = Database::getInstance();
+        $stmt = $db->prepare("
+            INSERT INTO access_logs (timestamp, ip_address, user_agent, request_path, request_method) 
+            VALUES (?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([
+            $logData['timestamp'],
+            $logData['ip'],
+            $logData['user_agent'],
+            $logData['path'],
+            $logData['method']
+        ]);
+    } catch (Exception $e) {
+        error_log("Failed to log access: " . $e->getMessage());
+    }
+}
 
-
-// - - - - - - - - - - - - - - - - 
-// ::RENDERING FOOTER AND END OF PAGE
-// 
-echo twig('@partials/footer.twig', [
-    'navitems' => $footer_nav_items,
-    'raw_body_end' => '',
-]);
+// Call logging function
+logAccess();
+?>
