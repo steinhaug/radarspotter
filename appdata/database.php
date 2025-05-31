@@ -3,126 +3,99 @@
  * RadarVarsler PWA - Database Connection and Management
  */
 
-class Database {
-    private static $instance = null;
-    private $connection;
-    
-    private function __construct() {
-        $this->connect();
-    }
-    
-    public static function getInstance() {
-        if (self::$instance === null) {
-            self::$instance = new self();
-        }
-        return self::$instance->connection;
-    }
-    
-    private function connect() {
-        try {
-            $this->connection = Mysqli2::getInstance(
-                DB_HOST,
-                3306,
-                DB_USER,
-                DB_PASS,
-                DB_NAME
-            );
-            
-            // Set timezone and charset
-            $this->connection->query("SET time_zone = '+01:00'");
-            $this->connection->query("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
-            
-        } catch (Exception $e) {
-            error_log("Database connection failed: " . $e->getMessage());
-            throw new Exception("Database connection failed");
-        }
-    }
-    
-    // Prevent cloning
-    private function __clone() {}
-    
-    // Prevent unserialization
-    public function __wakeup() {
-        throw new Exception("Cannot unserialize singleton");
-    }
-}
+// Database connection is handled globally via $mysqli in credentials.php
+// No need for Database class anymore - use global $mysqli directly
 
 /**
  * User Management Functions
  */
 class UserManager {
-    private $db;
-    
-    public function __construct() {
-        $this->db = Database::getInstance();
-    }
     
     public function authenticate($username, $password) {
-        $sql = "SELECT id, username, email, trust_score, premium_until, created_at 
-                FROM users 
-                WHERE username = ? AND password_hash = ?";
+        global $mysqli, $salt;
         
-        $stmt = $this->db->prepare($sql);
-        $passwordHash = hash('sha256', $password . ($salt ?? ''));
-        $stmt->bind_param('ss', $username, $passwordHash);
-        $stmt->execute();
+        $passwordHash = hash('sha256', $password . $salt);
         
-        $result = $stmt->get_result();
-        return $result->fetch_assoc();
+        $sql = [
+            'SELECT `id`, `username`, `email`, `trust_score`, `premium_until`, `created_at` 
+             FROM `users` 
+             WHERE `username` = ? AND `password_hash` = ?',
+            'ss',
+            [$username, $passwordHash]
+        ];
+        
+        return $mysqli->prepared_query1($sql[0], $sql[1], $sql[2], true);
     }
     
     public function register($username, $password, $email = null) {
-        // Check if user exists
-        $stmt = $this->db->prepare("SELECT id FROM users WHERE username = ?");
-        $stmt->execute([$username]);
+        global $mysqli, $salt;
         
-        if ($stmt->fetch()) {
+        // Check if user exists
+        $existingUser = $mysqli->prepared_query1(
+            "SELECT `id` FROM `users` WHERE `username` = ?", 
+            's', 
+            [$username], 
+            true
+        );
+        
+        if ($existingUser !== null) {
             throw new Exception("Brukernavn allerede i bruk");
         }
         
         // Create user
-        $stmt = $this->db->prepare("
-            INSERT INTO users (username, password_hash, email, trust_score, created_at) 
-            VALUES (?, ?, ?, 50, NOW()) 
-            RETURNING id, username, email, trust_score, created_at
-        ");
+        $passwordHash = hash('sha256', $password . $salt);
+        $sql = [
+            'INSERT INTO `users` (`username`, `password_hash`, `email`, `trust_score`, `created_at`) 
+             VALUES (?, ?, ?, 50, NOW())',
+            'sssi',
+            [$username, $passwordHash, $email, 50]
+        ];
         
-        $stmt->execute([
-            $username,
-            hash('sha256', $password . SALT),
-            $email
-        ]);
+        $userId = $mysqli->prepared_insert($sql);
         
-        return $stmt->fetch();
+        if (!$userId) {
+            throw new Exception("Kunne ikke opprette bruker");
+        }
+        
+        // Return the newly created user
+        return $mysqli->prepared_query1(
+            "SELECT `id`, `username`, `email`, `trust_score`, `created_at` FROM `users` WHERE `id` = ?",
+            'i',
+            [$userId],
+            true
+        );
     }
     
     public function updateTrustScore($userId, $change) {
-        $stmt = $this->db->prepare("
-            UPDATE users 
-            SET trust_score = GREATEST(0, LEAST(100, trust_score + ?))
-            WHERE id = ?
-        ");
+        global $mysqli;
         
-        return $stmt->execute([$change, $userId]);
+        $sql = [
+            'UPDATE `users` 
+             SET `trust_score` = GREATEST(0, LEAST(100, `trust_score` + ?))
+             WHERE `id` = ?',
+            'di',
+            [$change, $userId]
+        ];
+        
+        return $mysqli->prepared_insert($sql);
     }
     
     public function getUserStats($userId) {
-        $stmt = $this->db->prepare("
+        global $mysqli;
+        
+        return $mysqli->prepared_query1("
             SELECT 
                 COUNT(DISTINCT p.id) as pins_created,
                 COUNT(DISTINCT v.id) as verifications_given,
                 u.trust_score,
                 COALESCE(SUM(a.distance_km), 0) as distance_driven
-            FROM users u
-            LEFT JOIN pins p ON p.created_by = u.id
-            LEFT JOIN votes v ON v.user_id = u.id
-            LEFT JOIN analytics a ON a.user_id = u.id AND a.event_type = 'distance_driven'
+            FROM `users` u
+            LEFT JOIN `pins` p ON p.created_by = u.id
+            LEFT JOIN `votes` v ON v.user_id = u.id
+            LEFT JOIN `analytics` a ON a.user_id = u.id AND a.event_type = 'distance_driven'
             WHERE u.id = ?
             GROUP BY u.id, u.trust_score
-        ");
-        
-        $stmt->execute([$userId]);
-        return $stmt->fetch();
+        ", 'i', [$userId], true);
     }
 }
 
@@ -130,57 +103,47 @@ class UserManager {
  * PIN Management Functions
  */
 class PinManager {
-    private $db;
-    
-    public function __construct() {
-        $this->db = Database::getInstance();
-    }
     
     public function createPin($data) {
-        $stmt = $this->db->prepare("
-            INSERT INTO pins (
-                latitude, longitude, type, speed_limit, bearing, 
-                road_name, created_by, created_at, trust_score
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?) 
-            RETURNING id
-        ");
+        global $mysqli;
         
-        $stmt->execute([
-            $data['coordinates'][1], // latitude
-            $data['coordinates'][0], // longitude
-            $data['type'],
-            $data['speed_limit'],
-            $data['bearing'],
-            $data['road_name'] ?? null,
-            $data['created_by'],
-            $data['trust_score'] ?? 50
-        ]);
+        $sql = [
+            'INSERT INTO `pins` (
+                `latitude`, `longitude`, `type`, `speed_limit`, `bearing`, 
+                `road_name`, `created_by`, `created_at`, `trust_score`
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?)',
+            'ddsiisii',
+            [
+                $data['coordinates'][1], // latitude
+                $data['coordinates'][0], // longitude
+                $data['type'],
+                $data['speed_limit'],
+                $data['bearing'],
+                $data['road_name'] ?? null,
+                $data['created_by'],
+                $data['trust_score'] ?? 50
+            ]
+        ];
         
-        $result = $stmt->fetch();
-        return $result['id'];
+        return $mysqli->prepared_insert($sql);
     }
     
     public function getPinsInArea($latitude, $longitude, $radiusKm = 50) {
-        $stmt = $this->db->prepare("
-            SELECT 
-                id, latitude, longitude, type, speed_limit, bearing,
-                road_name, trust_score, verified_count, created_at,
-                ST_Distance(
-                    ST_MakePoint(longitude, latitude)::geography,
-                    ST_MakePoint(?, ?)::geography
-                ) / 1000 as distance_km
-            FROM pins 
-            WHERE ST_DWithin(
-                ST_MakePoint(longitude, latitude)::geography,
-                ST_MakePoint(?, ?)::geography,
-                ? * 1000
-            )
-            AND active = true
-            ORDER BY distance_km
-        ");
+        global $mysqli;
         
-        $stmt->execute([$longitude, $latitude, $longitude, $latitude, $radiusKm]);
-        $pins = $stmt->fetchAll();
+        // Using MySQL spatial functions instead of PostGIS
+        $pins = $mysqli->prepared_query("
+            SELECT 
+                `id`, `latitude`, `longitude`, `type`, `speed_limit`, `bearing`,
+                `road_name`, `trust_score`, `verified_count`, `created_at`,
+                (6371 * acos(cos(radians(?)) * cos(radians(`latitude`)) * 
+                 cos(radians(`longitude`) - radians(?)) + 
+                 sin(radians(?)) * sin(radians(`latitude`)))) as distance_km
+            FROM `pins` 
+            WHERE `active` = 1
+            HAVING distance_km <= ?
+            ORDER BY distance_km
+        ", 'dddd', [$latitude, $longitude, $latitude, $radiusKm]);
         
         // Convert to expected format
         foreach ($pins as &$pin) {
@@ -192,23 +155,29 @@ class PinManager {
     }
     
     public function votePin($pinId, $userId, $vote) {
-        // Check if user already voted
-        $stmt = $this->db->prepare("
-            SELECT id FROM votes WHERE pin_id = ? AND user_id = ?
-        ");
-        $stmt->execute([$pinId, $userId]);
+        global $mysqli;
         
-        if ($stmt->fetch()) {
+        // Check if user already voted
+        $existingVote = $mysqli->prepared_query1(
+            "SELECT `id` FROM `votes` WHERE `pin_id` = ? AND `user_id` = ?",
+            'ii',
+            [$pinId, $userId],
+            true
+        );
+        
+        if ($existingVote !== null) {
             throw new Exception("Du har allerede stemt på denne PIN-en");
         }
         
         // Insert vote
-        $stmt = $this->db->prepare("
-            INSERT INTO votes (pin_id, user_id, vote_type, created_at) 
-            VALUES (?, ?, ?, NOW())
-        ");
+        $sql = [
+            'INSERT INTO `votes` (`pin_id`, `user_id`, `vote_type`, `created_at`) 
+             VALUES (?, ?, ?, NOW())',
+            'iis',
+            [$pinId, $userId, $vote]
+        ];
         
-        $stmt->execute([$pinId, $userId, $vote]);
+        $mysqli->prepared_insert($sql);
         
         // Update PIN trust score
         $this->updatePinTrustScore($pinId);
@@ -222,44 +191,51 @@ class PinManager {
     }
     
     private function updatePinTrustScore($pinId) {
-        $stmt = $this->db->prepare("
-            UPDATE pins 
-            SET trust_score = (
-                SELECT GREATEST(0, LEAST(100, 
-                    50 + (COUNT(CASE WHEN vote_type = 'up' THEN 1 END) * 10) - 
-                    (COUNT(CASE WHEN vote_type = 'down' THEN 1 END) * 15)
-                ))
-                FROM votes 
-                WHERE pin_id = ?
-            ),
-            verified_count = (
-                SELECT COUNT(*) FROM votes WHERE pin_id = ? AND vote_type = 'up'
-            )
-            WHERE id = ?
-        ");
+        global $mysqli;
         
-        $stmt->execute([$pinId, $pinId, $pinId]);
+        $sql = [
+            'UPDATE `pins` 
+             SET `trust_score` = (
+                 SELECT GREATEST(0, LEAST(100, 
+                     50 + (COUNT(CASE WHEN `vote_type` = "up" THEN 1 END) * 10) - 
+                     (COUNT(CASE WHEN `vote_type` = "down" THEN 1 END) * 15)
+                 ))
+                 FROM `votes` 
+                 WHERE `pin_id` = ?
+             ),
+             `verified_count` = (
+                 SELECT COUNT(*) FROM `votes` WHERE `pin_id` = ? AND `vote_type` = "up"
+             )
+             WHERE `id` = ?',
+            'iii',
+            [$pinId, $pinId, $pinId]
+        ];
+        
+        $mysqli->prepared_insert($sql);
     }
     
     public function getPinVotes($pinId) {
-        $stmt = $this->db->prepare("
-            SELECT 
-                COUNT(CASE WHEN vote_type = 'up' THEN 1 END) as upvotes,
-                COUNT(CASE WHEN vote_type = 'down' THEN 1 END) as downvotes
-            FROM votes 
-            WHERE pin_id = ?
-        ");
+        global $mysqli;
         
-        $stmt->execute([$pinId]);
-        return $stmt->fetch();
+        return $mysqli->prepared_query1("
+            SELECT 
+                COUNT(CASE WHEN `vote_type` = 'up' THEN 1 END) as upvotes,
+                COUNT(CASE WHEN `vote_type` = 'down' THEN 1 END) as downvotes
+            FROM `votes` 
+            WHERE `pin_id` = ?
+        ", 'i', [$pinId], true);
     }
     
     public function deactivatePin($pinId) {
-        $stmt = $this->db->prepare("
-            UPDATE pins SET active = false WHERE id = ?
-        ");
+        global $mysqli;
         
-        return $stmt->execute([$pinId]);
+        $sql = [
+            'UPDATE `pins` SET `active` = 0 WHERE `id` = ?',
+            'i',
+            [$pinId]
+        ];
+        
+        return $mysqli->prepared_insert($sql);
     }
 }
 
@@ -267,35 +243,33 @@ class PinManager {
  * Chat Management Functions
  */
 class ChatManager {
-    private $db;
-    
-    public function __construct() {
-        $this->db = Database::getInstance();
-    }
     
     public function sendMessage($pinId, $userId, $message) {
-        $stmt = $this->db->prepare("
-            INSERT INTO pin_chat (pin_id, user_id, message, created_at) 
-            VALUES (?, ?, ?, NOW())
-        ");
+        global $mysqli;
         
-        return $stmt->execute([$pinId, $userId, $message]);
+        $sql = [
+            'INSERT INTO `pin_chat` (`pin_id`, `user_id`, `message`, `created_at`) 
+             VALUES (?, ?, ?, NOW())',
+            'iis',
+            [$pinId, $userId, $message]
+        ];
+        
+        return $mysqli->prepared_insert($sql);
     }
     
     public function getMessages($pinId, $limit = 50) {
-        $stmt = $this->db->prepare("
+        global $mysqli;
+        
+        $messages = $mysqli->prepared_query("
             SELECT 
                 pc.message, pc.created_at,
                 u.username, u.id as user_id
-            FROM pin_chat pc
-            JOIN users u ON pc.user_id = u.id
+            FROM `pin_chat` pc
+            JOIN `users` u ON pc.user_id = u.id
             WHERE pc.pin_id = ?
             ORDER BY pc.created_at DESC
             LIMIT ?
-        ");
-        
-        $stmt->execute([$pinId, $limit]);
-        $messages = $stmt->fetchAll();
+        ", 'ii', [$pinId, $limit]);
         
         // Reverse to show oldest first
         return array_reverse($messages);
