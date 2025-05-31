@@ -3,6 +3,8 @@
 require_once __DIR__ . '/credentials.php';
 require_once __DIR__ . '/vendor/autoload.php';
 
+define( 'APPDATA', __DIR__ . '/appdata/' );
+
 // Session configuration
 ini_set('session.cookie_httponly', 1);
 ini_set('session.use_only_cookies', 1);

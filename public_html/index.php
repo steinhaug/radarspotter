@@ -4,7 +4,7 @@
  * Norwegian radar warning app backend
  */
 
-require_once '../vendor/autoload.php';
+require_once '../environment.php';
 require_once '../appdata/config.php';
 require_once '../appdata/database.php';
 
