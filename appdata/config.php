@@ -1,7 +1,7 @@
 <?php
 /**
  * RadarVarsler PWA - Configuration File
- * Contains all application constants, database settings, and security configurations
+ * Contains all application constants and configurations
  */
 
 // Prevent direct access
@@ -27,30 +27,10 @@ define('APP_VERSION', '1.0.0');
 define('APP_URL', $_ENV['APP_URL'] ?? 'https://radarvarsler.no');
 
 // Security Constants
-define('SALT', $_ENV['SESSION_SECRET'] ?? 'default_salt_change_in_production');
-define('JWT_SECRET', $_ENV['JWT_SECRET'] ?? $_ENV['SESSION_SECRET'] ?? 'jwt_secret_key');
 define('SESSION_LIFETIME', 3600 * 24 * 30); // 30 days
 
-// Database Configuration
-$db_config = [
-    'host' => $_ENV['PGHOST'] ?? 'localhost',
-    'port' => $_ENV['PGPORT'] ?? '5432',
-    'database' => $_ENV['PGDATABASE'] ?? 'radarvarsler',
-    'username' => $_ENV['PGUSER'] ?? 'postgres',
-    'password' => $_ENV['PGPASSWORD'] ?? '',
-    'charset' => 'utf8'
-];
-
-// Redis Configuration (for caching and sessions)
-$redis_config = [
-    'host' => $_ENV['REDIS_HOST'] ?? 'localhost',
-    'port' => $_ENV['REDIS_PORT'] ?? 6379,
-    'password' => $_ENV['REDIS_PASSWORD'] ?? null,
-    'database' => $_ENV['REDIS_DB'] ?? 0
-];
-
 // MapBox Configuration
-define('MAPBOX_ACCESS_TOKEN', $_ENV['MAPBOX_ACCESS_TOKEN'] ?? 'pk.eyJ1IjoicmFkYXJ2YXJzbGVyIiwiYSI6ImNsczY4eGhuZDBraXUycXM1aG1hZW8wemcifQ.demo_token');
+define('MAPBOX_ACCESS_TOKEN', $_ENV['MAPBOX_ACCESS_TOKEN'] ?? '');
 define('MAPBOX_STYLE_URL', 'mapbox://styles/mapbox/streets-v12');
 
 // Push Notification Configuration
@@ -158,88 +138,8 @@ ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) ? 1 : 0);
 ini_set('session.cookie_samesite', 'Strict');
 ini_set('session.gc_maxlifetime', SESSION_LIFETIME);
 
-// Utility Functions
-function isProduction() {
-    return ($_ENV['APP_ENV'] ?? 'production') === 'production';
-}
-
-function isDevelopment() {
-    return ($_ENV['APP_ENV'] ?? 'production') === 'development';
-}
-
-function getBaseUrl() {
-    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    return "$protocol://$host";
-}
-
-function logMessage($level, $message, $context = []) {
-    $levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'];
-    $currentLevel = array_search(LOG_LEVEL, $levels);
-    $messageLevel = array_search($level, $levels);
-    
-    if ($messageLevel >= $currentLevel) {
-        $timestamp = date('Y-m-d H:i:s');
-        $contextStr = !empty($context) ? ' ' . json_encode($context) : '';
-        $logEntry = "[$timestamp] $level: $message$contextStr\n";
-        
-        error_log($logEntry, 3, LOG_FILE);
-    }
-}
-
-function sanitizeInput($input) {
-    if (is_array($input)) {
-        return array_map('sanitizeInput', $input);
-    }
-    
-    return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');
-}
-
-function validateCoordinates($latitude, $longitude) {
-    return is_numeric($latitude) && 
-           is_numeric($longitude) && 
-           $latitude >= -90 && 
-           $latitude <= 90 && 
-           $longitude >= -180 && 
-           $longitude <= 180;
-}
-
-function calculateDistance($lat1, $lon1, $lat2, $lon2) {
-    $earthRadius = 6371; // kilometers
-    
-    $dLat = deg2rad($lat2 - $lat1);
-    $dLon = deg2rad($lon2 - $lon1);
-    
-    $a = sin($dLat/2) * sin($dLat/2) + 
-         cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * 
-         sin($dLon/2) * sin($dLon/2);
-    
-    $c = 2 * atan2(sqrt($a), sqrt(1-$a));
-    
-    return $earthRadius * $c;
-}
-
-function generateUUID() {
-    return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-        mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-        mt_rand(0, 0xffff),
-        mt_rand(0, 0x0fff) | 0x4000,
-        mt_rand(0, 0x3fff) | 0x8000,
-        mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
-    );
-}
-
-function isValidEmail($email) {
-    return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
-}
-
-function hashPassword($password) {
-    return hash('sha256', $password . SALT);
-}
-
-function verifyPassword($password, $hash) {
-    return hash_equals($hash, hashPassword($password));
-}
+// Include utility functions
+require_once __DIR__ . '/func.inc.php';
 
 // Environment-specific configurations
 if (isDevelopment()) {
