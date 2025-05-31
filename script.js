@@ -779,36 +779,14 @@ class RadarVarslerApp {
     }
 
     setupWebSocket() {
-        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        const wsUrl = `${protocol}//${window.location.host}/ws`;
+        // WebSocket disabled for now - using polling for real-time updates
+        console.log('Using polling for real-time updates');
         
-        try {
-            this.websocket = new WebSocket(wsUrl);
-            
-            this.websocket.onopen = () => {
-                console.log('WebSocket connected');
-                // Send authentication
-                this.websocket.send(JSON.stringify({
-                    type: 'auth',
-                    user_id: this.currentUser?.id
-                }));
-            };
-
-            this.websocket.onmessage = (event) => {
-                this.handleWebSocketMessage(JSON.parse(event.data));
-            };
-
-            this.websocket.onclose = () => {
-                console.log('WebSocket disconnected');
-                // Reconnect after delay
-                setTimeout(() => this.setupWebSocket(), 5000);
-            };
-
-            this.websocket.onerror = (error) => {
-                console.error('WebSocket error:', error);
-            };
-        } catch (error) {
-            console.error('WebSocket setup failed:', error);
+        // Poll for new PINs every 30 seconds
+        if (this.currentUser) {
+            setInterval(() => {
+                this.loadPINs();
+            }, 30000);
         }
     }
 
